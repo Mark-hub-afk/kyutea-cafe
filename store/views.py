@@ -5,6 +5,7 @@ from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
 from django.contrib.auth.hashers import make_password
 from .models import CustomUser, Product, Add_on, Order, OrderItem, PasswordResetRequest
+from rest_framework.parsers import MultiPartParser, FormParser
 from .serializers import (
     CustomUserSerializer, ProductSerializer, AddOnSerializer,
     OrderSerializer, OrderItemSerializer, PasswordResetRequestSerializer
@@ -52,6 +53,7 @@ class AddOnViewSet(viewsets.ModelViewSet):
     queryset = Add_on.objects.all()
     serializer_class = AddOnSerializer
     permission_classes = [permissions.AllowAny]
+    parser_classes = (MultiPartParser, FormParser)
 
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all().order_by('-created_at')
