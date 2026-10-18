@@ -100,15 +100,15 @@
 
         <div class="text-center">
           <h4 class="font-bold text-xl text-[#3D2817]">{{ selectedProduct?.name }}</h4>
-          <p class="text-sm font-bold text-[#8B5A2B]">₱{{ selectedProduct?.price }}</p>
+          <p class="text-sm font-bold text-[#8B5A2B]">₱{{ calculatedUnitPrice }}</p>
         </div>
 
         <!-- ADD-ONS CHECKBOX LIST -->
-        <div v-if="addOns.length > 0" class="space-y-2 pt-2 border-t">
+        <div v-if="availableAddOnsForProduct.length > 0" class="space-y-2 pt-2 border-t">
           <label class="block text-xs font-bold text-gray-600 uppercase">Available Add-ons</label>
           <div class="max-h-36 overflow-y-auto space-y-1.5 pr-1">
             <label
-                v-for="addon in addOns"
+                v-for="addon in availableAddOnsForProduct"
                 :key="addon.id"
                 class="flex items-center justify-between text-xs bg-[#FAF3E0] p-2.5 rounded-xl border border-[#D4A373]/40 cursor-pointer hover:bg-amber-100/50"
             >
@@ -140,7 +140,7 @@
             @click="confirmAddToCart"
             class="w-full bg-[#8B5A2B] text-white font-bold py-3 rounded-2xl text-sm hover:bg-[#6F441F] transition cursor-pointer"
         >
-          Add To Cart 🛒
+          Add To Cart 🛒 (₱{{ (calculatedUnitPrice * quantity).toFixed(2) }})
         </button>
       </div>
     </div>
@@ -191,6 +191,23 @@ const filteredProducts = computed(() => {
   return products.value
 })
 
+// Dynamically filter add-ons so drinks get drink add-ons and foods get pastry add-ons
+const availableAddOnsForProduct = computed(() => {
+  if (!selectedProduct.value) return addOns.value
+  const isDrink = ['Milktea', 'Coffee', 'Fruit Soda'].includes(selectedProduct.value.category)
+  const targetClassification = isDrink ? 'Drink' : 'Pastry'
+  return addOns.value.filter(a => a.classification === targetClassification)
+})
+
+// Calculate live price (base price + sum of selected add-ons)
+const calculatedUnitPrice = computed(() => {
+  if (!selectedProduct.value) return 0
+  const basePrice = Number(selectedProduct.value.price) || 0
+  const chosenAddOns = addOns.value.filter(a => selectedAddOnIds.value.includes(a.id))
+  const addOnsTotal = chosenAddOns.reduce((sum, a) => sum + (Number(a.price) || 0), 0)
+  return (basePrice + addOnsTotal).toFixed(2)
+})
+
 const openCustomizeModal = (product) => {
   selectedProduct.value = product
   selectedAddOnIds.value = []
@@ -200,10 +217,13 @@ const openCustomizeModal = (product) => {
 
 const confirmAddToCart = () => {
   const chosenAddOns = addOns.value.filter(a => selectedAddOnIds.value.includes(a.id))
+  const finalPrice = Number(calculatedUnitPrice.value)
 
   emit('select-product', {
     ...selectedProduct.value,
+    price: finalPrice, // Corrected price including selected add-ons
     quantity: quantity.value,
+    add_ons: selectedAddOnIds.value, // Backend foreign key IDs array
     selectedAddOns: chosenAddOns
   })
 
