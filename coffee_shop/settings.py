@@ -139,7 +139,7 @@ MAILERS = {
     },
 }
 CORS_ALLOWED_ORIGINS = [
-    "https://your-frontend-app.vercel.app",
+    "kyutea-cafe-y72x.vercel.app",
     "http://localhost:5173",
 ]
 
