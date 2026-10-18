@@ -73,11 +73,6 @@ const startPolling = () => {
   statusPollInterval = setInterval(checkOrderStatus, 5000)
 }
 
-// Customization Modal State
-const activeProduct = ref<Product | null>(null)
-const selectedAddOns = ref<AddOn[]>([])
-const itemQuantity = ref(1)
-
 // Auth State
 const authToken = ref(localStorage.getItem('kyuTeaToken') || '')
 const isAuthModalOpen = ref(false)
@@ -116,37 +111,23 @@ const handleLoginSuccess = (token: string) => {
   localStorage.setItem('kyuTeaToken', token)
 }
 
-const openCustomizeModal = (product: Product) => {
-  activeProduct.value = product
-  selectedAddOns.value = []
-  itemQuantity.value = 1
-}
-
-const toggleAddOn = (addon: AddOn) => {
-  const index = selectedAddOns.value.findIndex(a => a.id === addon.id)
-  if (index > -1) {
-    selectedAddOns.value.splice(index, 1)
-  } else {
-    selectedAddOns.value.push(addon)
-  }
-}
-
-const isAddOnSelected = (addonId: number) => {
-  return selectedAddOns.value.some(a => a.id === addonId)
-}
-
-const addToCart = () => {
-  if (!activeProduct.value) return
-
+// Handle adding customized product from MenuView
+const handleAddToCart = (customizedItem: { id: number; name: string; price: number; category: string; image?: string; quantity: number; selectedAddOns: AddOn[] }) => {
   const newItem: CartItem = {
     cartId: Date.now().toString() + Math.random().toString().slice(2, 5),
-    product: activeProduct.value,
-    quantity: itemQuantity.value,
-    selectedAddOns: [...selectedAddOns.value]
+    product: {
+      id: customizedItem.id,
+      name: customizedItem.name,
+      category: customizedItem.category,
+      price: customizedItem.price,
+      is_available: true,
+      image: customizedItem.image
+    },
+    quantity: customizedItem.quantity,
+    selectedAddOns: customizedItem.selectedAddOns
   }
 
   cart.value.push(newItem)
-  activeProduct.value = null
   successMessage.value = `${newItem.product.name} added to cart!`
 
   setTimeout(() => {
@@ -161,11 +142,11 @@ const removeFromCart = (cartId: string) => {
 const itemPrice = (item: CartItem) => {
   const base = Number(item.product.price)
   const addonsTotal = item.selectedAddOns.reduce((sum, a) => sum + Number(a.price), 0)
-  return (base + addonsTotal) * item.quantity
+  return base * item.quantity // Note: price passed from MenuView already includes addons per unit
 }
 
 const cartTotal = () => {
-  return cart.value.reduce((total, item) => total + itemPrice(item), 0).toFixed(2)
+  return cart.value.reduce((total, item) => total + (Number(item.product.price) * item.quantity), 0).toFixed(2)
 }
 
 const checkout = async () => {
@@ -266,7 +247,7 @@ const clearActiveOrder = () => {
           <h2 class="text-2xl font-serif font-bold text-[#3D2817]">Featured Menu</h2>
           <p class="text-[#5C4A3D] text-sm">Freshly brewed milk tea, coffee, and delicious rustic snacks served daily.</p>
         </div>
-        <MenuView @select-product="openCustomizeModal" />
+        <MenuView @select-product="handleAddToCart" />
       </div>
 
       <!-- ADD-ONS TAB -->
@@ -338,7 +319,7 @@ const clearActiveOrder = () => {
                   <div v-if="item.selectedAddOns.length > 0" class="text-xs text-[#8C6239]">+ {{ item.selectedAddOns.map(a => a.name).join(', ') }}</div>
                 </div>
                 <div class="flex items-center space-x-4">
-                  <span class="font-bold text-[#8C6239]">₱{{ itemPrice(item).toFixed(2) }}</span>
+                  <span class="font-bold text-[#8C6239]">₱{{ (Number(item.product.price) * item.quantity).toFixed(2) }}</span>
                   <button @click="removeFromCart(item.cartId)" class="text-red-600 hover:text-red-800 font-bold text-xs cursor-pointer">✕</button>
                 </div>
               </div>
@@ -367,55 +348,6 @@ const clearActiveOrder = () => {
         </div>
       </div>
     </main>
-
-    <!-- ITEM CUSTOMIZATION MODAL -->
-    <div v-if="activeProduct" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-      <div class="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl space-y-4">
-        <div class="flex justify-between items-center border-b pb-3">
-          <h3 class="font-bold text-lg text-[#3D2817]">Customize Order</h3>
-          <button @click="activeProduct = null" class="text-gray-400 hover:text-gray-600 font-bold cursor-pointer">✕</button>
-        </div>
-
-        <div class="text-center">
-          <div v-if="activeProduct.image" class="h-28 w-full bg-[#F4ECD8] rounded-xl overflow-hidden mb-3 flex items-center justify-center">
-            <img :src="activeProduct.image" class="h-full w-full object-contain" />
-          </div>
-          <h4 class="font-serif font-bold text-[#3D2817] text-lg">{{ activeProduct.name }}</h4>
-          <p class="text-xs text-[#8C6239] font-bold">₱{{ activeProduct.price }}</p>
-        </div>
-
-        <!-- Add-Ons Selection -->
-        <div v-if="addOns.length > 0">
-          <label class="block text-xs font-bold text-gray-600 uppercase mb-2">Optional Add-Ons</label>
-          <div class="space-y-2 max-h-40 overflow-y-auto pr-1">
-            <div
-                v-for="addon in addOns"
-                :key="addon.id"
-                @click="toggleAddOn(addon)"
-                :class="isAddOnSelected(addon.id) ? 'border-[#8B5A2B] bg-amber-50' : 'border-gray-200'"
-                class="flex justify-between items-center p-2.5 border rounded-xl cursor-pointer text-xs transition"
-            >
-              <span class="font-semibold text-gray-800">{{ addon.name }}</span>
-              <span class="font-bold text-[#8B5A2B]">+₱{{ addon.price }}</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Quantity Selector -->
-        <div class="flex justify-between items-center pt-2 border-t">
-          <span class="text-xs font-bold text-gray-600 uppercase">Quantity</span>
-          <div class="flex items-center space-x-3">
-            <button @click="itemQuantity = Math.max(1, itemQuantity - 1)" class="w-7 h-7 bg-gray-100 rounded-lg text-sm font-bold text-gray-700 hover:bg-gray-200 cursor-pointer">-</button>
-            <span class="font-bold text-sm text-[#3D2817]">{{ itemQuantity }}</span>
-            <button @click="itemQuantity++" class="w-7 h-7 bg-gray-100 rounded-lg text-sm font-bold text-gray-700 hover:bg-gray-200 cursor-pointer">+</button>
-          </div>
-        </div>
-
-        <button @click="addToCart" class="w-full bg-[#8B5A2B] hover:bg-[#6F441F] text-white font-bold py-2.5 rounded-xl text-sm transition shadow cursor-pointer">
-          Add To Cart 🎉
-        </button>
-      </div>
-    </div>
 
     <!-- STAFF AUTH MODAL -->
     <StaffAuthModal
