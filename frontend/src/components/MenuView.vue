@@ -148,14 +148,28 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import API from '@/services/api'
+
+const props = defineProps({
+  initialCategory: {
+    type: String,
+    default: 'All'
+  }
+})
 
 const emit = defineEmits(['select-product'])
 
 const products = ref([])
 const addOns = ref([])
-const selectedCategory = ref('All')
+const selectedCategory = ref(props.initialCategory)
+
+// Keep selectedCategory synced with any parent props
+watch(() => props.initialCategory, (newVal) => {
+  if (newVal) {
+    selectedCategory.value = newVal
+  }
+})
 
 // Customization Modal State
 const showCustomizeModal = ref(false)
@@ -221,7 +235,7 @@ const confirmAddToCart = () => {
 
   emit('select-product', {
     ...selectedProduct.value,
-    price: finalPrice, // Corrected price including selected add-ons
+    price: finalPrice, // Price including selected add-ons
     quantity: quantity.value,
     add_ons: selectedAddOnIds.value, // Backend foreign key IDs array
     selectedAddOns: chosenAddOns

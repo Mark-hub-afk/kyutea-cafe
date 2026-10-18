@@ -228,7 +228,7 @@ const clearActiveOrder = () => {
       <nav class="flex items-center flex-wrap gap-1.5 sm:gap-3 text-xs sm:text-sm font-medium">
         <button @click="currentTab = 'home'" :class="currentTab === 'home' ? 'bg-[#5A3D28] text-[#F4ECD8] font-bold border border-[#C89D7C]/50 shadow-inner' : 'text-[#D3C1AE] hover:text-white'" class="px-3 sm:px-4 py-1.5 rounded-lg transition-all cursor-pointer">Home</button>
         <button @click="currentTab = 'order'" :class="currentTab === 'order' ? 'bg-[#5A3D28] text-[#F4ECD8] font-bold border border-[#C89D7C]/50 shadow-inner' : 'text-[#D3C1AE] hover:text-white'" class="px-3 sm:px-4 py-1.5 rounded-lg transition-all cursor-pointer">Order Now</button>
-        <button @click="currentTab = 'extras'" :class="currentTab === 'extras' ? 'bg-[#5A3D28] text-[#F4ECD8] font-bold border border-[#C89D7C]/50 shadow-inner' : 'text-[#D3C1AE] hover:text-white'" class="px-3 sm:px-4 py-1.5 rounded-lg transition-all cursor-pointer">Add-Ons</button>
+        <button @click="currentTab = 'extras'; loadData()" :class="currentTab === 'extras' ? 'bg-[#5A3D28] text-[#F4ECD8] font-bold border border-[#C89D7C]/50 shadow-inner' : 'text-[#D3C1AE] hover:text-white'" class="px-3 sm:px-4 py-1.5 rounded-lg transition-all cursor-pointer">Add-Ons</button>
         <button @click="currentTab = 'checkout'" :class="currentTab === 'checkout' ? 'bg-[#5A3D28] text-[#F4ECD8] font-bold border border-[#C89D7C]/50 shadow-inner' : 'text-[#D3C1AE] hover:text-white'" class="px-3 sm:px-4 py-1.5 rounded-lg transition-all cursor-pointer flex items-center gap-1">
           Checkout
           <span v-if="cart.length > 0" class="bg-[#D4A373] text-[#3D2817] text-xs font-bold rounded-full px-2 py-0.5 ml-1">{{ cart.length }}</span>
@@ -242,14 +242,10 @@ const clearActiveOrder = () => {
 
       <!-- HOME TAB -->
       <div v-if="currentTab === 'home'" class="w-full flex justify-center items-center">
-        <!-- Using direct inline flex-row style override so it always displays side-by-side on desktop -->
         <div class="bg-[#FAF3E0] rounded-3xl p-8 sm:p-10 shadow-2xl border-2 border-[#D4A373] flex flex-row items-center justify-between max-w-[720px] w-full gap-8">
-          <!-- Mascot Section -->
           <div class="flex justify-center items-center border-r-2 border-dashed border-[#C89D7C] pr-8 w-2/5">
             <img src="/mascot1.gif" alt="Mascot" class="w-44 h-44 object-contain" />
           </div>
-
-          <!-- Content Section -->
           <div class="flex-1 flex flex-col items-start text-left w-3/5">
             <h2 class="text-2xl font-serif font-bold text-[#3D2817] mb-2">Cozy Wooden Lodge ✨</h2>
             <p class="text-[#5C4A3D] text-sm mb-6 leading-relaxed">
@@ -257,7 +253,7 @@ const clearActiveOrder = () => {
             </p>
             <div class="flex flex-col gap-3 w-full max-w-[220px]">
               <button @click="currentTab = 'order'" class="bg-[#8C6239] hover:bg-[#704E2D] text-white font-semibold py-2.5 px-5 rounded-xl text-sm transition-all shadow cursor-pointer text-center block w-full">🧋 Place an Order</button>
-              <button @click="currentTab = 'extras'" class="bg-[#D4A373] hover:bg-[#C28E5F] text-[#3D2817] font-semibold py-2.5 px-5 rounded-xl text-sm transition-all shadow cursor-pointer text-center block w-full">🌿 Browse Add-Ons</button>
+              <button @click="currentTab = 'extras'; loadData()" class="bg-[#D4A373] hover:bg-[#C28E5F] text-[#3D2817] font-semibold py-2.5 px-5 rounded-xl text-sm transition-all shadow cursor-pointer text-center block w-full">🌿 Browse Add-Ons</button>
             </div>
           </div>
         </div>
@@ -291,14 +287,15 @@ const clearActiveOrder = () => {
             <div class="text-[#8C6239] font-extrabold text-lg">+₱{{ addon.price }}</div>
           </div>
         </div>
-        <div v-else class="text-center py-16 bg-[#FAF3E0] rounded-2xl border border-dashed border-[#D4A373]"><p class="text-[#5C4A3D] text-sm">Loading add-ons...</p></div>
+        <div v-else class="text-center py-16 bg-[#FAF3E0] rounded-2xl border border-dashed border-[#D4A373]">
+          <p class="text-[#5C4A3D] text-sm">No add-ons available at the moment.</p>
+        </div>
       </div>
 
       <!-- CHECKOUT TAB -->
       <div v-else-if="currentTab === 'checkout'" class="max-w-md mx-auto w-full self-start">
         <!-- ACTIVE ORDER TRACKING BANNER -->
         <div v-if="activeOrderId" class="mb-6">
-          <!-- Pending / Being Prepared -->
           <div v-if="activeOrderStatus === 'Pending'" class="bg-amber-50 border-2 border-amber-300 rounded-3xl p-6 text-center shadow-lg space-y-3">
             <div class="flex justify-center">
               <img src="/mascot7.gif" alt="Preparing" class="w-20 h-20 object-contain animate-bounce" />
@@ -310,7 +307,6 @@ const clearActiveOrder = () => {
             <p class="text-xs text-amber-800">Hang tight! Our staff is crafting your order.</p>
           </div>
 
-          <!-- Completed / Ready -->
           <div v-else-if="activeOrderStatus === 'Completed'" class="bg-emerald-50 border-2 border-emerald-400 rounded-3xl p-6 text-center shadow-lg space-y-3">
             <div class="flex justify-center">
               <img src="/mascot8.gif" alt="Ready" class="w-20 h-20 object-contain" />
