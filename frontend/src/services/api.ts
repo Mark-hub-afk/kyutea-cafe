@@ -1,10 +1,9 @@
 import axios from 'axios'
 
 const API = axios.create({
-    baseURL: 'https://disks-apply-sorts-colors.trycloudflare.com/api/',
-    headers: {
-        'Content-Type': 'application/json',
-    },
+    baseURL: import.meta.env.PROD
+        ? 'https://kyutea-cafe-2.onrender.com/api/'
+        : 'http://127.0.0.1:8000/api/',
 })
 
 export default API
