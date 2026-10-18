@@ -1,23 +1,23 @@
 from django.core.management.base import BaseCommand
-from store.models import MenuItem
+from store.models import Product
 
 class Command(BaseCommand):
     help = 'Automatically loads initial menu items into the database'
 
     def handle(self, *args, **kwargs):
         items = [
-            {"name": "Matcha Milk Tea", "category": "Drinks", "price": 4.50, "description": "Freshly brewed green tea with milk."},
-            {"name": "Classic Iced Coffee", "category": "Drinks", "price": 3.75, "description": "Rich espresso with chilled milk."},
-            {"name": "Croissant", "category": "Foods", "price": 3.00, "description": "Buttery, flaky French pastry."},
+            {"name": "Matcha Milk Tea", "category": "Milktea", "price": 4.50},
+            {"name": "Classic Iced Coffee", "category": "Coffee", "price": 3.75},
+            {"name": "Croissant", "category": "Food", "price": 3.00},
         ]
 
         for item_data in items:
-            item, created = MenuItem.objects.get_or_create(
+            item, created = Product.objects.get_or_create(
                 name=item_data["name"],
                 defaults={
                     "category": item_data["category"],
                     "price": item_data["price"],
-                    "description": item_data["description"]
+                    "is_available": True
                 }
             )
             if created:
