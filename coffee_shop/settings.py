@@ -139,7 +139,7 @@ MAILERS = {
     },
 }
 CORS_ALLOWED_ORIGINS = [
-    "kyutea-cafe-y72x.vercel.app",
+    "https://kyutea-cafe-y72x.vercel.app",
     "http://localhost:5173",
 ]
 CSRF_TRUSTED_ORIGINS = [
