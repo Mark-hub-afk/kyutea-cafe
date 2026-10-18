@@ -317,8 +317,8 @@
           <div>
             <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Classification</label>
             <select v-model="addonFormClassification" class="w-full px-3 py-2 border rounded-xl text-sm outline-none focus:ring-2 focus:ring-[#8B5A2B]">
-              <option value="Drink">Drink Add-on</option>
-              <option value="Pastry">Pastry Add-on</option>
+              <option value="Drink">Drink</option>
+              <option value="Pastry">Pastry</option>
             </select>
           </div>
 
