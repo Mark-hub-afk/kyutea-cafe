@@ -23,10 +23,43 @@
       >
         🥐 Foods
       </button>
+      <button
+          @click="selectedCategory = 'Addons'"
+          :class="selectedCategory === 'Addons' ? 'bg-[#8B5A2B] text-white font-bold' : 'bg-white/80 text-[#5C4A3D] hover:bg-white'"
+          class="px-5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all shadow-sm cursor-pointer"
+      >
+        ✨ Add-Ons
+      </button>
     </div>
 
-    <!-- Product Grid -->
-    <div v-if="filteredProducts.length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+    <!-- 1. ADD-ONS CATALOG VIEW -->
+    <div v-if="selectedCategory === 'Addons'">
+      <div v-if="addOns.length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div
+            v-for="addon in addOns"
+            :key="addon.id"
+            class="bg-[#FAF3E0] border border-[#D4A373] rounded-2xl p-5 shadow-md hover:shadow-xl transition flex flex-col justify-between"
+        >
+          <div>
+            <div v-if="addon.image" class="mb-3 h-36 w-full overflow-hidden rounded-xl bg-[#F4ECD8] border border-[#D4A373]/40 flex items-center justify-center">
+              <img :src="addon.image" :alt="addon.name" class="h-full w-full object-contain" />
+            </div>
+            <h3 class="text-lg font-serif font-bold text-[#3D2817] mb-1">{{ addon.name }}</h3>
+            <p class="text-xs text-[#8C6239] font-medium mb-3">{{ addon.classification }} Add-On</p>
+          </div>
+
+          <div class="flex justify-between items-center mt-4 pt-3 border-t border-[#D4A373]/30">
+            <span class="text-lg font-extrabold text-[#3D2817]">₱{{ addon.price }}</span>
+          </div>
+        </div>
+      </div>
+      <div v-else class="text-center py-12 bg-[#FAF3E0] rounded-2xl border border-dashed border-[#D4A373]">
+        <p class="text-[#5C4A3D] text-sm">No add-ons available at the moment.</p>
+      </div>
+    </div>
+
+    <!-- 2. MAIN PRODUCTS GRID VIEW -->
+    <div v-else-if="filteredProducts.length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
       <div
           v-for="product in filteredProducts"
           :key="product.id"
@@ -43,7 +76,7 @@
         <div class="flex justify-between items-center mt-4 pt-3 border-t border-[#D4A373]/30">
           <span class="text-lg font-extrabold text-[#3D2817]">₱{{ product.price }}</span>
           <button
-              @click="$emit('select-product', product)"
+              @click="openCustomizeModal(product)"
               class="bg-[#8B5A2B] hover:bg-[#6F441F] text-white text-xs font-bold px-4 py-2 rounded-xl transition shadow cursor-pointer"
           >
             + Add to Order
@@ -56,6 +89,61 @@
     <div v-else class="text-center py-12 bg-[#FAF3E0] rounded-2xl border border-dashed border-[#D4A373]">
       <p class="text-[#5C4A3D] text-sm">No items found in this category.</p>
     </div>
+
+    <!-- 3. CUSTOMIZE ORDER MODAL POPUP -->
+    <div v-if="showCustomizeModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+      <div class="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl space-y-4">
+        <div class="flex justify-between items-center border-b pb-3">
+          <h3 class="font-bold text-lg text-[#3D2817]">Customize Order</h3>
+          <button @click="showCustomizeModal = false" class="text-gray-400 hover:text-gray-600 font-bold cursor-pointer">✕</button>
+        </div>
+
+        <div class="text-center">
+          <h4 class="font-bold text-xl text-[#3D2817]">{{ selectedProduct?.name }}</h4>
+          <p class="text-sm font-bold text-[#8B5A2B]">₱{{ selectedProduct?.price }}</p>
+        </div>
+
+        <!-- ADD-ONS CHECKBOX LIST -->
+        <div v-if="addOns.length > 0" class="space-y-2 pt-2 border-t">
+          <label class="block text-xs font-bold text-gray-600 uppercase">Available Add-ons</label>
+          <div class="max-h-36 overflow-y-auto space-y-1.5 pr-1">
+            <label
+                v-for="addon in addOns"
+                :key="addon.id"
+                class="flex items-center justify-between text-xs bg-[#FAF3E0] p-2.5 rounded-xl border border-[#D4A373]/40 cursor-pointer hover:bg-amber-100/50"
+            >
+              <div class="flex items-center gap-2">
+                <input
+                    type="checkbox"
+                    :value="addon.id"
+                    v-model="selectedAddOnIds"
+                    class="rounded text-[#8B5A2B] focus:ring-[#8B5A2B]"
+                />
+                <span class="font-bold text-gray-800">{{ addon.name }}</span>
+              </div>
+              <span class="font-bold text-[#8B5A2B]">+₱{{ addon.price }}</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- QUANTITY SELECTOR -->
+        <div class="flex justify-between items-center pt-2">
+          <span class="text-xs font-bold text-gray-600 uppercase">Quantity</span>
+          <div class="flex items-center gap-3 bg-gray-100 rounded-xl px-3 py-1">
+            <button @click="quantity > 1 && quantity--" class="font-bold text-gray-600 cursor-pointer">-</button>
+            <span class="font-bold text-sm">{{ quantity }}</span>
+            <button @click="quantity++" class="font-bold text-gray-600 cursor-pointer">+</button>
+          </div>
+        </div>
+
+        <button
+            @click="confirmAddToCart"
+            class="w-full bg-[#8B5A2B] text-white font-bold py-3 rounded-2xl text-sm hover:bg-[#6F441F] transition cursor-pointer"
+        >
+          Add To Cart 🛒
+        </button>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -63,11 +151,17 @@
 import { ref, computed, onMounted } from 'vue'
 import API from '@/services/api'
 
-defineEmits(['select-product'])
+const emit = defineEmits(['select-product'])
 
 const products = ref([])
-// 1. Define selectedCategory reactive reference
+const addOns = ref([])
 const selectedCategory = ref('All')
+
+// Customization Modal State
+const showCustomizeModal = ref(false)
+const selectedProduct = ref(null)
+const selectedAddOnIds = ref([])
+const quantity = ref(1)
 
 const fetchProducts = async () => {
   try {
@@ -78,7 +172,15 @@ const fetchProducts = async () => {
   }
 }
 
-// 2. Computed filtering matching your ERD choices (Milktea, Coffee, Fruit Soda -> Drinks | Food -> Foods)
+const fetchAddOns = async () => {
+  try {
+    const res = await API.get('add-ons/')
+    addOns.value = res.data
+  } catch (err) {
+    console.error('Failed to load add-ons:', err)
+  }
+}
+
 const filteredProducts = computed(() => {
   if (selectedCategory.value === 'Drinks') {
     return products.value.filter(p => ['Milktea', 'Coffee', 'Fruit Soda'].includes(p.category))
@@ -89,7 +191,27 @@ const filteredProducts = computed(() => {
   return products.value
 })
 
+const openCustomizeModal = (product) => {
+  selectedProduct.value = product
+  selectedAddOnIds.value = []
+  quantity.value = 1
+  showCustomizeModal.value = true
+}
+
+const confirmAddToCart = () => {
+  const chosenAddOns = addOns.value.filter(a => selectedAddOnIds.value.includes(a.id))
+
+  emit('select-product', {
+    ...selectedProduct.value,
+    quantity: quantity.value,
+    selectedAddOns: chosenAddOns
+  })
+
+  showCustomizeModal.value = false
+}
+
 onMounted(() => {
   fetchProducts()
+  fetchAddOns()
 })
 </script>
