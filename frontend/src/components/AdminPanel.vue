@@ -4,7 +4,7 @@
     <div class="flex justify-between items-center mb-6">
       <div>
         <h1 class="text-2xl font-bold text-[#4A2E19]">Staff Admin Dashboard</h1>
-        <p class="text-sm text-gray-600">Manage orders, catalog inventory, and staff access.</p>
+        <p class="text-sm text-gray-600">Manage orders, catalog inventory, add-ons, and staff access.</p>
       </div>
       <button @click="$emit('logout')" class="bg-red-600 text-white px-4 py-2 rounded-xl text-sm font-bold hover:bg-red-700 transition cursor-pointer">
         Logout
@@ -12,25 +12,32 @@
     </div>
 
     <!-- Navigation Tabs -->
-    <div class="flex space-x-6 border-b border-amber-200 pb-3 mb-6 text-sm font-bold">
+    <div class="flex space-x-6 border-b border-amber-200 pb-3 mb-6 text-sm font-bold overflow-x-auto">
       <button
           @click="currentTab = 'orders'; fetchOrders()"
           :class="currentTab === 'orders' ? 'text-[#8B5A2B] border-b-2 border-[#8B5A2B]' : 'text-gray-400 hover:text-gray-600'"
-          class="pb-2 transition cursor-pointer"
+          class="pb-2 transition cursor-pointer whitespace-nowrap"
       >
         📦 Orders
       </button>
       <button
           @click="currentTab = 'inventory'; fetchProducts()"
           :class="currentTab === 'inventory' ? 'text-[#8B5A2B] border-b-2 border-[#8B5A2B]' : 'text-gray-400 hover:text-gray-600'"
-          class="pb-2 transition cursor-pointer"
+          class="pb-2 transition cursor-pointer whitespace-nowrap"
       >
         ☕ Menu Inventory
       </button>
       <button
+          @click="currentTab = 'addons'; fetchAddOns()"
+          :class="currentTab === 'addons' ? 'text-[#8B5A2B] border-b-2 border-[#8B5A2B]' : 'text-gray-400 hover:text-gray-600'"
+          class="pb-2 transition cursor-pointer whitespace-nowrap"
+      >
+        extras Add-Ons
+      </button>
+      <button
           @click="currentTab = 'approvals'; fetchStaffUsers()"
           :class="currentTab === 'approvals' ? 'text-[#8B5A2B] border-b-2 border-[#8B5A2B]' : 'text-gray-400 hover:text-gray-600'"
-          class="pb-2 transition cursor-pointer"
+          class="pb-2 transition cursor-pointer whitespace-nowrap"
       >
         👥 Staff Approvals
       </button>
@@ -38,7 +45,7 @@
           v-if="currentUserPrivileged"
           @click="currentTab = 'resets'; fetchPasswordResets()"
           :class="currentTab === 'resets' ? 'text-[#8B5A2B] border-b-2 border-[#8B5A2B]' : 'text-gray-400 hover:text-gray-600'"
-          class="pb-2 transition cursor-pointer"
+          class="pb-2 transition cursor-pointer whitespace-nowrap"
       >
         🔑 Password Resets
       </button>
@@ -117,7 +124,33 @@
       </div>
     </div>
 
-    <!-- TAB 3: STAFF APPROVALS -->
+    <!-- TAB 3: ADD-ONS MANAGEMENT -->
+    <div v-else-if="currentTab === 'addons'" class="bg-[#FDFBF7] p-6 rounded-2xl shadow-sm border border-amber-100">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-lg font-bold text-[#4A2E19]">Add-Ons Management</h2>
+        <button @click="openAddOnModal(null)" class="bg-[#8B5A2B] text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-[#6F441F] cursor-pointer">
+          + Add New Add-On
+        </button>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div v-for="addon in addOns" :key="addon.id" class="bg-white border border-amber-200 p-4 rounded-2xl shadow-sm flex flex-col justify-between">
+          <div>
+            <div v-if="addon.image" class="h-32 w-full bg-amber-50 rounded-xl overflow-hidden mb-3 flex items-center justify-center">
+              <img :src="addon.image" class="h-full w-full object-contain" />
+            </div>
+            <h4 class="font-bold text-[#4A2E19]">{{ addon.name }}</h4>
+            <p class="text-xs text-[#8B5A2B] font-semibold">{{ addon.classification }} — ₱{{ addon.price }}</p>
+          </div>
+          <div class="flex justify-end space-x-2 mt-4">
+            <button @click="openAddOnModal(addon)" class="bg-[#8B5A2B] text-white text-xs px-3 py-1.5 rounded-lg font-bold hover:bg-[#6F441F] cursor-pointer">Edit</button>
+            <button @click="deleteAddOn(addon.id)" class="bg-red-700 text-white text-xs px-3 py-1.5 rounded-lg font-bold hover:bg-red-800 cursor-pointer">Delete</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 4: STAFF APPROVALS -->
     <div v-else-if="currentTab === 'approvals'" class="bg-[#FDFBF7] p-6 rounded-2xl shadow-sm border border-amber-100">
       <h2 class="text-lg font-bold text-[#4A2E19] mb-4">Staff Accounts Approval</h2>
 
@@ -184,7 +217,7 @@
       </div>
     </div>
 
-    <!-- TAB 4: PASSWORD RESETS -->
+    <!-- TAB 5: PASSWORD RESETS -->
     <div v-else-if="currentTab === 'resets' && currentUserPrivileged" class="bg-[#FDFBF7] p-6 rounded-2xl shadow-sm border border-amber-100">
       <h2 class="text-lg font-bold text-[#4A2E19] mb-4">Pending Password Reset Requests</h2>
 
@@ -243,6 +276,7 @@
               <option value="Milktea">Milktea</option>
               <option value="Coffee">Coffee</option>
               <option value="Food">Food</option>
+              <option value="Fruit Soda">Fruit Soda</option>
             </select>
           </div>
 
@@ -265,6 +299,48 @@
         </div>
       </div>
     </div>
+
+    <!-- ADD-ON MODAL -->
+    <div v-if="showAddOnModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+      <div class="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4">
+        <div class="flex justify-between items-center border-b pb-3">
+          <h3 class="font-bold text-lg text-[#4A2E19]">{{ editingAddOn ? 'Edit Add-On' : 'Add New Add-On' }}</h3>
+          <button @click="showAddOnModal = false" class="text-gray-400 hover:text-gray-600 font-bold">✕</button>
+        </div>
+
+        <div class="space-y-3">
+          <div>
+            <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Add-On Name</label>
+            <input v-model="addonFormName" type="text" class="w-full px-3 py-2 border rounded-xl text-sm outline-none focus:ring-2 focus:ring-[#8B5A2B]" />
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Classification</label>
+            <select v-model="addonFormClassification" class="w-full px-3 py-2 border rounded-xl text-sm outline-none focus:ring-2 focus:ring-[#8B5A2B]">
+              <option value="Drink">Drink Add-on</option>
+              <option value="Pastry">Pastry Add-on</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Price (₱)</label>
+            <input v-model="addonFormPrice" type="number" step="0.01" class="w-full px-3 py-2 border rounded-xl text-sm outline-none focus:ring-2 focus:ring-[#8B5A2B]" />
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Image File</label>
+            <input @change="handleAddOnImageUpload" type="file" accept="image/*" class="w-full text-xs text-gray-500" />
+          </div>
+        </div>
+
+        <div class="flex gap-2 pt-2">
+          <button @click="showAddOnModal = false" class="w-1/2 bg-gray-100 text-gray-600 font-bold py-2 rounded-xl text-xs cursor-pointer">Cancel</button>
+          <button @click="saveAddOn" class="w-1/2 bg-[#8B5A2B] text-white font-bold py-2 rounded-xl text-xs hover:bg-[#6F441F] cursor-pointer">
+            Save Add-On
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -275,17 +351,26 @@ import API from '@/services/api'
 const currentTab = ref('orders')
 const orders = ref([])
 const products = ref([])
+const addOns = ref([])
 const staffUsers = ref([])
 const passwordResets = ref([])
 const currentUserPrivileged = ref(true)
 
-// Modal State
+// Product Modal State
 const showProductModal = ref(false)
 const editingProduct = ref(null)
 const prodFormName = ref('')
 const prodFormCategory = ref('Milktea')
 const prodFormPrice = ref('')
 const prodFormImage = ref(null)
+
+// Add-On Modal State
+const showAddOnModal = ref(false)
+const editingAddOn = ref(null)
+const addonFormName = ref('')
+const addonFormClassification = ref('Drink')
+const addonFormPrice = ref('')
+const addonFormImage = ref(null)
 
 const fetchOrders = async () => {
   try {
@@ -302,6 +387,15 @@ const fetchProducts = async () => {
     products.value = res.data
   } catch (err) {
     console.error('Failed to load products', err)
+  }
+}
+
+const fetchAddOns = async () => {
+  try {
+    const res = await API.get('add-ons/')
+    addOns.value = res.data
+  } catch (err) {
+    console.error('Failed to load add-ons', err)
   }
 }
 
@@ -422,9 +516,63 @@ const deleteProduct = async (productId) => {
   }
 }
 
+const openAddOnModal = (addon = null) => {
+  editingAddOn.value = addon
+  if (addon) {
+    addonFormName.value = addon.name
+    addonFormClassification.value = addon.classification
+    addonFormPrice.value = String(addon.price)
+  } else {
+    addonFormName.value = ''
+    addonFormClassification.value = 'Drink'
+    addonFormPrice.value = ''
+  }
+  addonFormImage.value = null
+  showAddOnModal.value = true
+}
+
+const handleAddOnImageUpload = (event) => {
+  if (event.target.files && event.target.files[0]) {
+    addonFormImage.value = event.target.files[0]
+  }
+}
+
+const saveAddOn = async () => {
+  try {
+    const formData = new FormData()
+    formData.append('name', addonFormName.value)
+    formData.append('classification', addonFormClassification.value)
+    formData.append('price', String(addonFormPrice.value))
+    if (addonFormImage.value) {
+      formData.append('image', addonFormImage.value)
+    }
+
+    if (editingAddOn.value) {
+      await API.patch(`add-ons/${editingAddOn.value.id}/`, formData)
+    } else {
+      await API.post('add-ons/', formData)
+    }
+    showAddOnModal.value = false
+    fetchAddOns()
+  } catch (err) {
+    alert('Failed to save add-on.')
+  }
+}
+
+const deleteAddOn = async (addonId) => {
+  if (!confirm('Are you sure you want to delete this add-on?')) return
+  try {
+    await API.delete(`add-ons/${addonId}/`)
+    fetchAddOns()
+  } catch (err) {
+    alert('Failed to delete add-on.')
+  }
+}
+
 onMounted(() => {
   fetchOrders()
   fetchProducts()
+  fetchAddOns()
   fetchStaffUsers()
   fetchPasswordResets()
 })
