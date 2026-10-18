@@ -1,5 +1,5 @@
 from django.core.management.base import BaseCommand
-from coffee_shop.models import MenuItem  # Change 'coffee_shop' to your actual app name if different
+from store.models import MenuItem
 
 class Command(BaseCommand):
     help = 'Automatically loads initial menu items into the database'
