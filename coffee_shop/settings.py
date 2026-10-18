@@ -1,3 +1,5 @@
+import os
+import dj_database_url
 """
 Django settings for coffee_shop project.
 
@@ -82,14 +84,10 @@ WSGI_APPLICATION = "coffee_shop.wsgi.application"
 # https://docs.djangoproject.com/en/6.1/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'cof_back',
-        'USER': 'postgres',
-        'PASSWORD': 'AkiRose',
-        'HOST': 'localhost',
-        'PORT': '5432',
-    }
+    'default': dj_database_url.config(
+        default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
+        conn_max_age=600
+    )
 }
 
 
