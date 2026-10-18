@@ -2,7 +2,7 @@ import axios from 'axios'
 
 const API = axios.create({
     baseURL: import.meta.env.PROD
-        ? 'https://kyutea-cafe-2.onrender.com/api/'
+        ? 'https://kyutea-cafe.onrender.com/api/'
         : 'http://127.0.0.1:8000/api/',
 })
 
