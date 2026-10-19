@@ -1,6 +1,6 @@
 <template>
   <div>
-    <!-- Category Filter Tabs -->
+    <!-- Category Filter Tabs (Add-Ons button removed) -->
     <div class="flex justify-center space-x-3 mb-8">
       <button
           @click="selectedCategory = 'All'"
@@ -23,51 +23,19 @@
       >
         🥐 Foods
       </button>
-      <button
-          @click="selectedCategory = 'Addons'"
-          :class="selectedCategory === 'Addons' ? 'bg-[#8B5A2B] text-white font-bold' : 'bg-white/80 text-[#5C4A3D] hover:bg-white'"
-          class="px-5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all shadow-sm cursor-pointer"
-      >
-        ✨ Add-Ons
-      </button>
     </div>
 
-    <!-- 1. ADD-ONS CATALOG VIEW -->
-    <div v-if="selectedCategory === 'Addons'">
-      <div v-if="addOns.length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        <div
-            v-for="addon in addOns"
-            :key="addon.id"
-            class="bg-[#FAF3E0] border border-[#D4A373] rounded-2xl p-5 shadow-md hover:shadow-xl transition flex flex-col justify-between"
-        >
-          <div>
-            <div v-if="addon.image" class="mb-3 h-36 w-full overflow-hidden rounded-xl bg-[#F4ECD8] border border-[#D4A373]/40 flex items-center justify-center">
-              <img :src="addon.image" :alt="addon.name" class="h-full w-full object-contain" />
-            </div>
-            <h3 class="text-lg font-serif font-bold text-[#3D2817] mb-1">{{ addon.name }}</h3>
-            <p class="text-xs text-[#8C6239] font-medium mb-3">{{ addon.classification }} Add-On</p>
-          </div>
-
-          <div class="flex justify-between items-center mt-4 pt-3 border-t border-[#D4A373]/30">
-            <span class="text-lg font-extrabold text-[#3D2817]">₱{{ addon.price }}</span>
-          </div>
-        </div>
-      </div>
-      <div v-else class="text-center py-12 bg-[#FAF3E0] rounded-2xl border border-dashed border-[#D4A373]">
-        <p class="text-[#5C4A3D] text-sm">No add-ons available at the moment.</p>
-      </div>
-    </div>
-
-    <!-- 2. MAIN PRODUCTS GRID VIEW -->
-    <div v-else-if="filteredProducts.length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+    <!-- MAIN PRODUCTS GRID VIEW -->
+    <div v-if="filteredProducts.length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
       <div
           v-for="product in filteredProducts"
           :key="product.id"
           class="bg-[#FAF3E0] border border-[#D4A373] rounded-2xl p-5 shadow-md hover:shadow-xl transition flex flex-col justify-between"
       >
         <div>
+          <!-- Product Image with Production URL resolution -->
           <div v-if="product.image" class="mb-3 h-36 w-full overflow-hidden rounded-xl bg-[#F4ECD8] border border-[#D4A373]/40 flex items-center justify-center">
-            <img :src="product.image" :alt="product.name" class="h-full w-full object-contain" />
+            <img :src="getImageUrl(product.image)" :alt="product.name" class="h-full w-full object-contain" />
           </div>
           <h3 class="text-lg font-serif font-bold text-[#3D2817] mb-1">{{ product.name }}</h3>
           <p class="text-xs text-[#8C6239] font-medium mb-3">{{ product.category }}</p>
@@ -90,7 +58,7 @@
       <p class="text-[#5C4A3D] text-sm">No items found in this category.</p>
     </div>
 
-    <!-- 3. CUSTOMIZE ORDER MODAL POPUP -->
+    <!-- CUSTOMIZE ORDER MODAL POPUP -->
     <div v-if="showCustomizeModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
       <div class="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl space-y-4">
         <div class="flex justify-between items-center border-b pb-3">
@@ -177,6 +145,17 @@ const selectedProduct = ref(null)
 const selectedAddOnIds = ref([])
 const quantity = ref(1)
 
+// Helper function to handle full image URLs whether local or production Render backend
+const getImageUrl = (imagePath) => {
+  if (!imagePath) return ''
+  if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+    return imagePath
+  }
+  // Change to your actual Render backend URL if running live, or fallback to API base
+  const backendBase = 'https://kyutea-backend.onrender.com'
+  return `${backendBase}${imagePath}`
+}
+
 const fetchProducts = async () => {
   try {
     const res = await API.get('products/')
@@ -205,7 +184,7 @@ const filteredProducts = computed(() => {
   return products.value
 })
 
-// Dynamically filter add-ons so drinks get drink add-ons and foods get pastry add-ons
+// <-- Filter Addons and Pastry Addons -->
 const availableAddOnsForProduct = computed(() => {
   if (!selectedProduct.value) return addOns.value
   const isDrink = ['Milktea', 'Coffee', 'Fruit Soda'].includes(selectedProduct.value.category)
@@ -237,7 +216,7 @@ const confirmAddToCart = () => {
     ...selectedProduct.value,
     price: finalPrice, // Price including selected add-ons
     quantity: quantity.value,
-    add_ons: selectedAddOnIds.value, // Backend foreign key IDs array
+    add_ons: selectedAddOnIds.value,
     selectedAddOns: chosenAddOns
   })
 

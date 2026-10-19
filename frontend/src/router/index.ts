@@ -13,8 +13,6 @@ const router = createRouter({
     {
       path: '/add-ons',
       name: 'add-ons',
-      // If you created an AddOnsView component, import it and map it here,
-      // or map it to MenuView / a dedicated section if managed inline
       component: MenuView
     },
     {
