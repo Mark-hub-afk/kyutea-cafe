@@ -4,7 +4,10 @@
     <div class="flex justify-between items-center mb-6">
       <div>
         <h1 class="text-2xl font-bold text-[#4A2E19]">Staff Admin Dashboard</h1>
-        <p class="text-sm text-gray-600">Manage orders, catalog inventory, add-ons, and staff access.</p>
+        <p class="text-sm text-gray-600">
+          Logged in as: <span class="font-bold text-[#8B5A2B]">{{ loggedInUser.username || 'User' }}</span>
+          ({{ currentUserPrivileged ? 'Admin Account' : 'Staff Account' }})
+        </p>
       </div>
       <button @click="$emit('logout')" class="bg-red-600 text-white px-4 py-2 rounded-xl text-sm font-bold hover:bg-red-700 transition cursor-pointer">
         Logout
@@ -13,7 +16,7 @@
 
     <!-- Navigation Tabs -->
     <div class="flex space-x-6 border-b border-amber-200 pb-3 mb-6 text-sm font-bold overflow-x-auto">
-      <!-- STAFF TABS (Hidden if user is Admin) -->
+      <!-- STAFF TABS (Visible ONLY to regular Staff) -->
       <button
           v-if="!currentUserPrivileged"
           @click="currentTab = 'orders'; fetchOrders()"
@@ -39,7 +42,7 @@
         extras Add-Ons
       </button>
 
-      <!-- ADMIN TABS (Hidden if user is regular Staff) -->
+      <!-- ADMIN TABS (Visible ONLY to Admin accounts) -->
       <button
           v-if="currentUserPrivileged"
           @click="currentTab = 'approvals'; fetchStaffUsers()"
@@ -58,7 +61,7 @@
       </button>
     </div>
 
-    <!-- TAB 1: ORDERS -->
+    <!-- TAB 1: ORDERS (STAFF ONLY) -->
     <div v-if="!currentUserPrivileged && currentTab === 'orders'" class="bg-[#FDFBF7] p-6 rounded-2xl shadow-sm border border-amber-100">
       <div class="flex justify-between items-center mb-4">
         <h2 class="text-lg font-bold text-[#4A2E19]">Recent Orders</h2>
@@ -105,7 +108,7 @@
       </div>
     </div>
 
-    <!-- TAB 2: MENU INVENTORY -->
+    <!-- TAB 2: MENU INVENTORY (STAFF ONLY) -->
     <div v-else-if="!currentUserPrivileged && currentTab === 'inventory'" class="bg-[#FDFBF7] p-6 rounded-2xl shadow-sm border border-amber-100">
       <div class="flex justify-between items-center mb-4">
         <h2 class="text-lg font-bold text-[#4A2E19]">Menu Catalog Management</h2>
@@ -131,7 +134,7 @@
       </div>
     </div>
 
-    <!-- TAB 3: ADD-ONS MANAGEMENT -->
+    <!-- TAB 3: ADD-ONS MANAGEMENT (STAFF ONLY) -->
     <div v-else-if="!currentUserPrivileged && currentTab === 'addons'" class="bg-[#FDFBF7] p-6 rounded-2xl shadow-sm border border-amber-100">
       <div class="flex justify-between items-center mb-4">
         <h2 class="text-lg font-bold text-[#4A2E19]">Add-Ons Management</h2>
@@ -157,7 +160,7 @@
       </div>
     </div>
 
-    <!-- TAB 4: STAFF APPROVALS -->
+    <!-- TAB 4: STAFF APPROVALS (ADMIN ONLY) -->
     <div v-else-if="currentUserPrivileged && currentTab === 'approvals'" class="bg-[#FDFBF7] p-6 rounded-2xl shadow-sm border border-amber-100">
       <h2 class="text-lg font-bold text-[#4A2E19] mb-4">Staff Accounts Approval</h2>
 
@@ -224,7 +227,7 @@
       </div>
     </div>
 
-    <!-- TAB 5: PASSWORD RESETS -->
+    <!-- TAB 5: PASSWORD RESETS (ADMIN ONLY) -->
     <div v-else-if="currentUserPrivileged && currentTab === 'resets'" class="bg-[#FDFBF7] p-6 rounded-2xl shadow-sm border border-amber-100">
       <h2 class="text-lg font-bold text-[#4A2E19] mb-4">Pending Password Reset Requests</h2>
 
@@ -355,7 +358,6 @@
 import { ref, onMounted } from 'vue'
 import API from '@/services/api'
 
-// Determine if the current logged-in user is an admin based on localStorage profile or state
 const getStoredUser = () => {
   try {
     return JSON.parse(localStorage.getItem('user') || '{}')
@@ -364,11 +366,18 @@ const getStoredUser = () => {
   }
 }
 
-const loggedInUser = getStoredUser()
-// Adjust this flag depending on how your backend marks admins (e.g., is_superuser, is_admin_privileged, or role === 'admin')
-const currentUserPrivileged = ref(loggedInUser.is_admin_privileged || loggedInUser.is_superuser || false)
+const loggedInUser = ref(getStoredUser())
 
-// Default tab: Admins land on 'approvals', Staff land on 'orders'
+// Evaluates true strictly for admin / superuser status
+const checkIsAdmin = (user) => {
+  return Boolean(
+      user.is_admin_privileged === true ||
+      user.is_superuser === true ||
+      user.role === 'admin'
+  )
+}
+
+const currentUserPrivileged = ref(checkIsAdmin(loggedInUser.value))
 const currentTab = ref(currentUserPrivileged.value ? 'approvals' : 'orders')
 
 const orders = ref([])
@@ -447,14 +456,18 @@ const updateOrderStatus = async (orderId, newStatus) => {
   }
 }
 
+// Send all permissions flags simultaneously so Django backends update properly
 const updateUserPermissions = async (user, isApproved, isAdmin) => {
   try {
     await API.patch(`users/${user.id}/`, {
       is_approved: isApproved,
-      is_admin_privileged: isAdmin
+      is_admin_privileged: isAdmin,
+      is_staff: isApproved,
+      is_superuser: isAdmin
     })
     user.is_approved = isApproved
     user.is_admin_privileged = isAdmin
+    fetchStaffUsers()
   } catch (err) {
     alert('Failed to update staff permissions.')
   }
@@ -464,9 +477,11 @@ const toggleAdminPrivilege = async (user) => {
   try {
     const newAdminStatus = !user.is_admin_privileged
     await API.patch(`users/${user.id}/`, {
-      is_admin_privileged: newAdminStatus
+      is_admin_privileged: newAdminStatus,
+      is_superuser: newAdminStatus
     })
     user.is_admin_privileged = newAdminStatus
+    fetchStaffUsers()
   } catch (err) {
     alert('Failed to toggle admin status.')
   }
@@ -591,6 +606,11 @@ const deleteAddOn = async (addonId) => {
 }
 
 onMounted(() => {
+  // Re-read local storage on mount to ensure fresh state after modal login
+  loggedInUser.value = getStoredUser()
+  currentUserPrivileged.value = checkIsAdmin(loggedInUser.value)
+  currentTab.value = currentUserPrivileged.value ? 'approvals' : 'orders'
+
   if (currentUserPrivileged.value) {
     fetchStaffUsers()
     fetchPasswordResets()
