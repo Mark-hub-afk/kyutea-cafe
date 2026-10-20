@@ -13,7 +13,7 @@
       </button>
     </div>
 
-    <!-- Navigation Tabs (All tabs visible to everyone) -->
+    <!-- Navigation Tabs -->
     <div class="flex space-x-6 border-b border-amber-200 pb-3 mb-6 text-sm font-bold overflow-x-auto">
       <button
           @click="currentTab = 'orders'; fetchOrders()"
@@ -67,6 +67,7 @@
           <tr class="border-b border-amber-200 text-xs text-amber-900/60 uppercase">
             <th class="py-3 px-4">Order ID</th>
             <th class="py-3 px-4">Customer</th>
+            <th class="py-3 px-4">Items Ordered</th>
             <th class="py-3 px-4">Total</th>
             <th class="py-3 px-4">Status</th>
             <th class="py-3 px-4 text-center">Action</th>
@@ -75,7 +76,15 @@
           <tbody class="divide-y divide-amber-100 text-sm">
           <tr v-for="order in orders" :key="order.id" class="hover:bg-amber-50/50 transition">
             <td class="py-3 px-4 font-bold text-gray-800">#{{ order.id }}</td>
-            <td class="py-3 px-4 text-gray-600">{{ order.customer_name }}</td>
+            <td class="py-3 px-4 text-gray-600 font-semibold">{{ order.customer_name }}</td>
+            <td class="py-3 px-4 text-xs text-gray-700">
+              <div v-for="item in (order.items || order.order_items || [])" :key="item.id" class="py-0.5">
+                <span class="font-bold text-[#8B5A2B]">{{ item.quantity || 1 }}x</span>
+                {{ item.product_name || item.product?.name || item.name || 'Product' }}
+                <span v-if="item.selected_size" class="text-gray-505">({{ item.selected_size }})</span>
+              </div>
+              <span v-if="!order.items && !order.order_items" class="text-gray-400 italic">No items listed</span>
+            </td>
             <td class="py-3 px-4 font-bold text-[#8B5A2B]">₱{{ order.total_price }}</td>
             <td class="py-3 px-4">
                 <span :class="{
@@ -92,7 +101,7 @@
             </td>
           </tr>
           <tr v-if="orders.length === 0">
-            <td colspan="5" class="text-center py-6 text-gray-400 text-xs">No orders placed yet.</td>
+            <td colspan="6" class="text-center py-6 text-gray-400 text-xs">No orders placed yet.</td>
           </tr>
           </tbody>
         </table>
