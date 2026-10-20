@@ -13,7 +13,9 @@
 
     <!-- Navigation Tabs -->
     <div class="flex space-x-6 border-b border-amber-200 pb-3 mb-6 text-sm font-bold overflow-x-auto">
+      <!-- STAFF TABS (Hidden if user is Admin) -->
       <button
+          v-if="!currentUserPrivileged"
           @click="currentTab = 'orders'; fetchOrders()"
           :class="currentTab === 'orders' ? 'text-[#8B5A2B] border-b-2 border-[#8B5A2B]' : 'text-gray-400 hover:text-gray-600'"
           class="pb-2 transition cursor-pointer whitespace-nowrap"
@@ -21,6 +23,7 @@
         📦 Orders
       </button>
       <button
+          v-if="!currentUserPrivileged"
           @click="currentTab = 'inventory'; fetchProducts()"
           :class="currentTab === 'inventory' ? 'text-[#8B5A2B] border-b-2 border-[#8B5A2B]' : 'text-gray-400 hover:text-gray-600'"
           class="pb-2 transition cursor-pointer whitespace-nowrap"
@@ -28,13 +31,17 @@
         ☕ Menu Inventory
       </button>
       <button
+          v-if="!currentUserPrivileged"
           @click="currentTab = 'addons'; fetchAddOns()"
           :class="currentTab === 'addons' ? 'text-[#8B5A2B] border-b-2 border-[#8B5A2B]' : 'text-gray-400 hover:text-gray-600'"
           class="pb-2 transition cursor-pointer whitespace-nowrap"
       >
         extras Add-Ons
       </button>
+
+      <!-- ADMIN TABS (Hidden if user is regular Staff) -->
       <button
+          v-if="currentUserPrivileged"
           @click="currentTab = 'approvals'; fetchStaffUsers()"
           :class="currentTab === 'approvals' ? 'text-[#8B5A2B] border-b-2 border-[#8B5A2B]' : 'text-gray-400 hover:text-gray-600'"
           class="pb-2 transition cursor-pointer whitespace-nowrap"
@@ -52,7 +59,7 @@
     </div>
 
     <!-- TAB 1: ORDERS -->
-    <div v-if="currentTab === 'orders'" class="bg-[#FDFBF7] p-6 rounded-2xl shadow-sm border border-amber-100">
+    <div v-if="!currentUserPrivileged && currentTab === 'orders'" class="bg-[#FDFBF7] p-6 rounded-2xl shadow-sm border border-amber-100">
       <div class="flex justify-between items-center mb-4">
         <h2 class="text-lg font-bold text-[#4A2E19]">Recent Orders</h2>
         <button @click="fetchOrders" class="bg-[#8B5A2B] text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-[#6F441F] cursor-pointer">
@@ -99,7 +106,7 @@
     </div>
 
     <!-- TAB 2: MENU INVENTORY -->
-    <div v-else-if="currentTab === 'inventory'" class="bg-[#FDFBF7] p-6 rounded-2xl shadow-sm border border-amber-100">
+    <div v-else-if="!currentUserPrivileged && currentTab === 'inventory'" class="bg-[#FDFBF7] p-6 rounded-2xl shadow-sm border border-amber-100">
       <div class="flex justify-between items-center mb-4">
         <h2 class="text-lg font-bold text-[#4A2E19]">Menu Catalog Management</h2>
         <button @click="openProductModal(null)" class="bg-[#8B5A2B] text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-[#6F441F] cursor-pointer">
@@ -125,7 +132,7 @@
     </div>
 
     <!-- TAB 3: ADD-ONS MANAGEMENT -->
-    <div v-else-if="currentTab === 'addons'" class="bg-[#FDFBF7] p-6 rounded-2xl shadow-sm border border-amber-100">
+    <div v-else-if="!currentUserPrivileged && currentTab === 'addons'" class="bg-[#FDFBF7] p-6 rounded-2xl shadow-sm border border-amber-100">
       <div class="flex justify-between items-center mb-4">
         <h2 class="text-lg font-bold text-[#4A2E19]">Add-Ons Management</h2>
         <button @click="openAddOnModal(null)" class="bg-[#8B5A2B] text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-[#6F441F] cursor-pointer">
@@ -151,7 +158,7 @@
     </div>
 
     <!-- TAB 4: STAFF APPROVALS -->
-    <div v-else-if="currentTab === 'approvals'" class="bg-[#FDFBF7] p-6 rounded-2xl shadow-sm border border-amber-100">
+    <div v-else-if="currentUserPrivileged && currentTab === 'approvals'" class="bg-[#FDFBF7] p-6 rounded-2xl shadow-sm border border-amber-100">
       <h2 class="text-lg font-bold text-[#4A2E19] mb-4">Staff Accounts Approval</h2>
 
       <div class="overflow-x-auto">
@@ -218,7 +225,7 @@
     </div>
 
     <!-- TAB 5: PASSWORD RESETS -->
-    <div v-else-if="currentTab === 'resets' && currentUserPrivileged" class="bg-[#FDFBF7] p-6 rounded-2xl shadow-sm border border-amber-100">
+    <div v-else-if="currentUserPrivileged && currentTab === 'resets'" class="bg-[#FDFBF7] p-6 rounded-2xl shadow-sm border border-amber-100">
       <h2 class="text-lg font-bold text-[#4A2E19] mb-4">Pending Password Reset Requests</h2>
 
       <div class="overflow-x-auto">
@@ -348,13 +355,27 @@
 import { ref, onMounted } from 'vue'
 import API from '@/services/api'
 
-const currentTab = ref('orders')
+// Determine if the current logged-in user is an admin based on localStorage profile or state
+const getStoredUser = () => {
+  try {
+    return JSON.parse(localStorage.getItem('user') || '{}')
+  } catch {
+    return {}
+  }
+}
+
+const loggedInUser = getStoredUser()
+// Adjust this flag depending on how your backend marks admins (e.g., is_superuser, is_admin_privileged, or role === 'admin')
+const currentUserPrivileged = ref(loggedInUser.is_admin_privileged || loggedInUser.is_superuser || false)
+
+// Default tab: Admins land on 'approvals', Staff land on 'orders'
+const currentTab = ref(currentUserPrivileged.value ? 'approvals' : 'orders')
+
 const orders = ref([])
 const products = ref([])
 const addOns = ref([])
 const staffUsers = ref([])
 const passwordResets = ref([])
-const currentUserPrivileged = ref(true)
 
 // Product Modal State
 const showProductModal = ref(false)
@@ -570,10 +591,13 @@ const deleteAddOn = async (addonId) => {
 }
 
 onMounted(() => {
-  fetchOrders()
-  fetchProducts()
-  fetchAddOns()
-  fetchStaffUsers()
-  fetchPasswordResets()
+  if (currentUserPrivileged.value) {
+    fetchStaffUsers()
+    fetchPasswordResets()
+  } else {
+    fetchOrders()
+    fetchProducts()
+    fetchAddOns()
+  }
 })
 </script>
