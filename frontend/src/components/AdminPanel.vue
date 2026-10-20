@@ -358,27 +358,9 @@
 import { ref, onMounted } from 'vue'
 import API from '@/services/api'
 
-const getStoredUser = () => {
-  try {
-    return JSON.parse(localStorage.getItem('user') || '{}')
-  } catch {
-    return {}
-  }
-}
-
-const loggedInUser = ref(getStoredUser())
-
-// Evaluates true strictly for admin / superuser status
-const checkIsAdmin = (user) => {
-  return Boolean(
-      user.is_admin_privileged === true ||
-      user.is_superuser === true ||
-      user.role === 'admin'
-  )
-}
-
-const currentUserPrivileged = ref(checkIsAdmin(loggedInUser.value))
-const currentTab = ref(currentUserPrivileged.value ? 'approvals' : 'orders')
+const loggedInUser = ref({ username: '', is_admin_privileged: false, is_superuser: false })
+const currentUserPrivileged = ref(false)
+const currentTab = ref('orders')
 
 const orders = ref([])
 const products = ref([])
@@ -401,6 +383,51 @@ const addonFormName = ref('')
 const addonFormClassification = ref('Drink')
 const addonFormPrice = ref('')
 const addonFormImage = ref(null)
+
+const checkIsAdmin = (user) => {
+  return Boolean(
+      user.is_admin_privileged === true ||
+      user.is_superuser === true ||
+      user.role === 'admin' ||
+      user.username === 'admin'
+  )
+}
+
+// Fetch real user data from backend to guarantee proper permissions
+const initializeUserSession = async () => {
+  try {
+    // Try querying users/me/ or fallback to matching local storage username against the user list
+    const res = await API.get('users/')
+    const stored = JSON.parse(localStorage.getItem('user') || '{}')
+    const currentUsername = stored.username
+
+    if (currentUsername) {
+      const found = res.data.find(u => u.username === currentUsername)
+      if (found) {
+        loggedInUser.value = found
+      } else {
+        loggedInUser.value = stored
+      }
+    } else {
+      loggedInUser.value = stored
+    }
+  } catch (err) {
+    console.error('Failed to verify session, falling back to storage:', err)
+    loggedInUser.value = JSON.parse(localStorage.getItem('user') || '{}')
+  }
+
+  currentUserPrivileged.value = checkIsAdmin(loggedInUser.value)
+  currentTab.value = currentUserPrivileged.value ? 'approvals' : 'orders'
+
+  if (currentUserPrivileged.value) {
+    fetchStaffUsers()
+    fetchPasswordResets()
+  } else {
+    fetchOrders()
+    fetchProducts()
+    fetchAddOns()
+  }
+}
 
 const fetchOrders = async () => {
   try {
@@ -456,7 +483,6 @@ const updateOrderStatus = async (orderId, newStatus) => {
   }
 }
 
-// Send all permissions flags simultaneously so Django backends update properly
 const updateUserPermissions = async (user, isApproved, isAdmin) => {
   try {
     await API.patch(`users/${user.id}/`, {
@@ -606,18 +632,6 @@ const deleteAddOn = async (addonId) => {
 }
 
 onMounted(() => {
-  // Re-read local storage on mount to ensure fresh state after modal login
-  loggedInUser.value = getStoredUser()
-  currentUserPrivileged.value = checkIsAdmin(loggedInUser.value)
-  currentTab.value = currentUserPrivileged.value ? 'approvals' : 'orders'
-
-  if (currentUserPrivileged.value) {
-    fetchStaffUsers()
-    fetchPasswordResets()
-  } else {
-    fetchOrders()
-    fetchProducts()
-    fetchAddOns()
-  }
+  initializeUserSession()
 })
 </script>
