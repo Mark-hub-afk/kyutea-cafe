@@ -11,8 +11,18 @@ const router = createRouter({
       component: MenuView
     },
     {
+      path: '/order',
+      name: 'order',
+      component: MenuView
+    },
+    {
       path: '/add-ons',
       name: 'add-ons',
+      component: MenuView
+    },
+    {
+      path: '/checkout',
+      name: 'checkout',
       component: MenuView
     },
     {
@@ -43,6 +53,10 @@ const router = createRouter({
       path: '/admin/resets',
       name: 'admin-resets',
       component: AdminPanel
+    },
+    {
+      path: '/:pathMatch(.*)*',
+      redirect: '/'
     }
   ],
 })
