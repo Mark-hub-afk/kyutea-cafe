@@ -18,7 +18,35 @@ const router = createRouter({
     {
       path: '/admin',
       name: 'admin',
-      component: AdminPanel
+      component: AdminPanel,
+      redirect: '/admin/orders',
+      children: [
+        {
+          path: 'orders',
+          name: 'admin-orders',
+          component: AdminPanel
+        },
+        {
+          path: 'inventory',
+          name: 'admin-inventory',
+          component: AdminPanel
+        },
+        {
+          path: 'addons',
+          name: 'admin-addons',
+          component: AdminPanel
+        },
+        {
+          path: 'approvals',
+          name: 'admin-approvals',
+          component: AdminPanel
+        },
+        {
+          path: 'resets',
+          name: 'admin-resets',
+          component: AdminPanel
+        }
+      ]
     }
   ],
 })

@@ -13,47 +13,52 @@
       </button>
     </div>
 
-    <!-- Navigation Tabs -->
+    <!-- Navigation Tabs (Router-linked) -->
     <div class="flex space-x-6 border-b border-amber-200 pb-3 mb-6 text-sm font-bold overflow-x-auto">
-      <button
-          @click="currentTab = 'orders'; fetchOrders()"
-          :class="currentTab === 'orders' ? 'text-[#8B5A2B] border-b-2 border-[#8B5A2B]' : 'text-gray-400 hover:text-gray-600'"
+      <router-link
+          to="/admin/orders"
+          @click="fetchOrders"
+          :class="$route.path.includes('/admin/orders') ? 'text-[#8B5A2B] border-b-2 border-[#8B5A2B]' : 'text-gray-400 hover:text-gray-600'"
           class="pb-2 transition cursor-pointer whitespace-nowrap"
       >
         📦 Orders
-      </button>
-      <button
-          @click="currentTab = 'inventory'; fetchProducts()"
-          :class="currentTab === 'inventory' ? 'text-[#8B5A2B] border-b-2 border-[#8B5A2B]' : 'text-gray-400 hover:text-gray-600'"
+      </router-link>
+      <router-link
+          to="/admin/inventory"
+          @click="fetchProducts"
+          :class="$route.path.includes('/admin/inventory') ? 'text-[#8B5A2B] border-b-2 border-[#8B5A2B]' : 'text-gray-400 hover:text-gray-600'"
           class="pb-2 transition cursor-pointer whitespace-nowrap"
       >
         ☕ Menu Inventory
-      </button>
-      <button
-          @click="currentTab = 'addons'; fetchAddOns()"
-          :class="currentTab === 'addons' ? 'text-[#8B5A2B] border-b-2 border-[#8B5A2B]' : 'text-gray-400 hover:text-gray-600'"
+      </router-link>
+      <router-link
+          to="/admin/addons"
+          @click="fetchAddOns"
+          :class="$route.path.includes('/admin/addons') ? 'text-[#8B5A2B] border-b-2 border-[#8B5A2B]' : 'text-gray-400 hover:text-gray-600'"
           class="pb-2 transition cursor-pointer whitespace-nowrap"
       >
         extras Add-Ons
-      </button>
-      <button
-          @click="currentTab = 'approvals'; fetchStaffUsers()"
-          :class="currentTab === 'approvals' ? 'text-[#8B5A2B] border-b-2 border-[#8B5A2B]' : 'text-gray-400 hover:text-gray-600'"
+      </router-link>
+      <router-link
+          to="/admin/approvals"
+          @click="fetchStaffUsers"
+          :class="$route.path.includes('/admin/approvals') ? 'text-[#8B5A2B] border-b-2 border-[#8B5A2B]' : 'text-gray-400 hover:text-gray-600'"
           class="pb-2 transition cursor-pointer whitespace-nowrap"
       >
         👥 Staff Approvals
-      </button>
-      <button
-          @click="currentTab = 'resets'; fetchPasswordResets()"
-          :class="currentTab === 'resets' ? 'text-[#8B5A2B] border-b-2 border-[#8B5A2B]' : 'text-gray-400 hover:text-gray-600'"
+      </router-link>
+      <router-link
+          to="/admin/resets"
+          @click="fetchPasswordResets"
+          :class="$route.path.includes('/admin/resets') ? 'text-[#8B5A2B] border-b-2 border-[#8B5A2B]' : 'text-gray-400 hover:text-gray-600'"
           class="pb-2 transition cursor-pointer whitespace-nowrap"
       >
         🔑 Password Resets
-      </button>
+      </router-link>
     </div>
 
     <!-- TAB 1: ORDERS -->
-    <div v-if="currentTab === 'orders'" class="bg-[#FDFBF7] p-6 rounded-2xl shadow-sm border border-amber-100">
+    <div v-if="$route.path.includes('/admin/orders')" class="bg-[#FDFBF7] p-6 rounded-2xl shadow-sm border border-amber-100">
       <div class="flex justify-between items-center mb-4">
         <h2 class="text-lg font-bold text-[#4A2E19]">Recent Orders</h2>
         <button @click="fetchOrders" class="bg-[#8B5A2B] text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-[#6F441F] cursor-pointer">
@@ -81,7 +86,7 @@
               <div v-for="item in (order.items || order.order_items || [])" :key="item.id" class="py-0.5">
                 <span class="font-bold text-[#8B5A2B]">{{ item.quantity || 1 }}x</span>
                 {{ item.product_name || item.product?.name || item.name || 'Product' }}
-                <span v-if="item.selected_size" class="text-gray-505">({{ item.selected_size }})</span>
+                <span v-if="item.selected_size" class="text-gray-500">({{ item.selected_size }})</span>
               </div>
               <span v-if="!order.items && !order.order_items" class="text-gray-400 italic">No items listed</span>
             </td>
@@ -109,7 +114,7 @@
     </div>
 
     <!-- TAB 2: MENU INVENTORY -->
-    <div v-else-if="currentTab === 'inventory'" class="bg-[#FDFBF7] p-6 rounded-2xl shadow-sm border border-amber-100">
+    <div v-else-if="$route.path.includes('/admin/inventory')" class="bg-[#FDFBF7] p-6 rounded-2xl shadow-sm border border-amber-100">
       <div class="flex justify-between items-center mb-4">
         <h2 class="text-lg font-bold text-[#4A2E19]">Menu Catalog Management</h2>
         <button @click="openProductModal(null)" class="bg-[#8B5A2B] text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-[#6F441F] cursor-pointer">
@@ -135,7 +140,7 @@
     </div>
 
     <!-- TAB 3: ADD-ONS MANAGEMENT -->
-    <div v-else-if="currentTab === 'addons'" class="bg-[#FDFBF7] p-6 rounded-2xl shadow-sm border border-amber-100">
+    <div v-else-if="$route.path.includes('/admin/addons')" class="bg-[#FDFBF7] p-6 rounded-2xl shadow-sm border border-amber-100">
       <div class="flex justify-between items-center mb-4">
         <h2 class="text-lg font-bold text-[#4A2E19]">Add-Ons Management</h2>
         <button @click="openAddOnModal(null)" class="bg-[#8B5A2B] text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-[#6F441F] cursor-pointer">
@@ -161,7 +166,7 @@
     </div>
 
     <!-- TAB 4: STAFF APPROVALS -->
-    <div v-else-if="currentTab === 'approvals'" class="bg-[#FDFBF7] p-6 rounded-2xl shadow-sm border border-amber-100">
+    <div v-else-if="$route.path.includes('/admin/approvals')" class="bg-[#FDFBF7] p-6 rounded-2xl shadow-sm border border-amber-100">
       <h2 class="text-lg font-bold text-[#4A2E19] mb-4">Staff Accounts Approval</h2>
 
       <div class="overflow-x-auto">
@@ -212,7 +217,7 @@
     </div>
 
     <!-- TAB 5: PASSWORD RESETS -->
-    <div v-else-if="currentTab === 'resets'" class="bg-[#FDFBF7] p-6 rounded-2xl shadow-sm border border-amber-100">
+    <div v-else-if="$route.path.includes('/admin/resets')" class="bg-[#FDFBF7] p-6 rounded-2xl shadow-sm border border-amber-100">
       <h2 class="text-lg font-bold text-[#4A2E19] mb-4">Pending Password Reset Requests</h2>
 
       <div class="overflow-x-auto">
@@ -340,10 +345,11 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
 import API from '@/services/api'
 
+const route = useRoute()
 const loggedInUser = ref({ username: '' })
-const currentTab = ref('orders')
 
 const orders = ref([])
 const products = ref([])
@@ -563,6 +569,18 @@ const deleteAddOn = async (addonId) => {
 
 onMounted(() => {
   initializeUserSession()
-  fetchOrders()
+
+  // Load appropriate data based on active URL route
+  if (route.path.includes('/admin/inventory')) {
+    fetchProducts()
+  } else if (route.path.includes('/admin/addons')) {
+    fetchAddOns()
+  } else if (route.path.includes('/admin/approvals')) {
+    fetchStaffUsers()
+  } else if (route.path.includes('/admin/resets')) {
+    fetchPasswordResets()
+  } else {
+    fetchOrders()
+  }
 })
 </script>
