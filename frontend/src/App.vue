@@ -1,8 +1,10 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, onMounted, watch, onUnmounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import API from './services/api'
+import MenuView from '@/components/MenuView.vue'
 import StaffAuthModal from '@/components/StaffAuthModal.vue'
+import AdminPanel from '@/components/AdminPanel.vue'
 
 interface Product {
   id: number;
@@ -29,8 +31,25 @@ interface CartItem {
   selectedAddOns: AddOn[];
 }
 
+const route = useRoute()
 const router = useRouter()
 
+// Sync current active tab with URL path automatically
+const currentTab = ref<'home' | 'order' | 'extras' | 'checkout' | 'admin'>('home')
+
+watch(
+    () => route.path,
+    (newPath) => {
+      if (newPath.startsWith('/admin')) currentTab.value = 'admin'
+      else if (newPath === '/order') currentTab.value = 'order'
+      else if (newPath === '/add-ons') currentTab.value = 'extras'
+      else if (newPath === '/checkout') currentTab.value = 'checkout'
+      else currentTab.value = 'home'
+    },
+    { immediate: true }
+)
+
+// Shop State
 const products = ref<Product[]>([])
 const addOns = ref<AddOn[]>([])
 const cart = ref<CartItem[]>([])
@@ -38,6 +57,7 @@ const customerName = ref('')
 const successMessage = ref('')
 const isSubmitting = ref(false)
 
+// Active Order Tracking State
 const activeOrderId = ref<number | null>(
     localStorage.getItem('kyuTeaActiveOrderId') ? Number(localStorage.getItem('kyuTeaActiveOrderId')) : null
 )
@@ -63,6 +83,7 @@ const startPolling = () => {
   statusPollInterval = setInterval(checkOrderStatus, 5000)
 }
 
+// Auth State
 const authToken = ref(localStorage.getItem('kyuTeaToken') || '')
 const isAuthModalOpen = ref(false)
 
@@ -186,7 +207,7 @@ const clearActiveOrder = () => {
 <template>
   <div class="min-h-screen bg-[#F4ECD8] text-[#3D2817] flex flex-col font-sans">
 
-    <!-- Top Navigation Header -->
+    <!-- Header Bar -->
     <header class="bg-[#3D2817] text-[#F4ECD8] py-3 px-4 sm:px-8 shadow-md flex flex-wrap justify-between items-center border-b-4 border-[#5A3D28] print:hidden gap-2">
       <div class="flex items-center space-x-3 cursor-pointer" @click="router.push('/')">
         <img src="/mascot1.gif" alt="Logo" class="w-8 h-8 rounded-full object-cover border border-[#C89D7C]" />
@@ -195,7 +216,6 @@ const clearActiveOrder = () => {
         </h1>
       </div>
 
-      <!-- Navigation Links using active-class attribute -->
       <nav class="flex items-center flex-wrap gap-1.5 sm:gap-3 text-xs sm:text-sm font-medium">
         <router-link to="/" active-class="bg-[#5A3D28] text-[#F4ECD8] font-bold border border-[#C89D7C]/50 shadow-inner" class="text-[#D3C1AE] hover:text-white px-3 sm:px-4 py-1.5 rounded-lg transition-all">Home</router-link>
         <router-link to="/order" active-class="bg-[#5A3D28] text-[#F4ECD8] font-bold border border-[#C89D7C]/50 shadow-inner" class="text-[#D3C1AE] hover:text-white px-3 sm:px-4 py-1.5 rounded-lg transition-all">Order Now</router-link>
@@ -208,30 +228,139 @@ const clearActiveOrder = () => {
       </nav>
     </header>
 
-    <!-- Main Container -->
+    <!-- MAIN CONTENT CONTAINER -->
     <main class="flex-grow max-w-5xl mx-auto px-6 py-10 w-full print:hidden flex flex-col justify-center items-center">
-      <router-view
-          :products="products"
-          :add-ons="addOns"
-          :cart="cart"
-          :success-message="successMessage"
-          :customer-name="customerName"
-          :active-order-id="activeOrderId"
-          :active-order-status="activeOrderStatus"
-          :is-submitting="isSubmitting"
-          :auth-token="authToken"
-          :is-auth-modal-open="isAuthModalOpen"
-          @select-product="handleAddToCart"
-          @remove-from-cart="removeFromCart"
-          @checkout="checkout"
-          @clear-active-order="clearActiveOrder"
-          @update:customer-name="customerName = $event"
-          @open-auth-modal="isAuthModalOpen = true"
-          @logout="handleStaffLogout"
-      />
+
+      <!-- HOME TAB -->
+      <div v-if="currentTab === 'home'" class="w-full flex justify-center items-center">
+        <div class="bg-[#FAF3E0] rounded-3xl p-8 sm:p-10 shadow-2xl border-2 border-[#D4A373] flex flex-row items-center justify-between max-w-[720px] w-full gap-8">
+          <div class="flex justify-center items-center border-r-2 border-dashed border-[#C89D7C] pr-8 w-2/5">
+            <img src="/mascot1.gif" alt="Mascot" class="w-44 h-44 object-contain" />
+          </div>
+          <div class="flex-1 flex flex-col items-start text-left w-3/5">
+            <h2 class="text-2xl font-serif font-bold text-[#3D2817] mb-2">Cozy Wooden Lodge ✨</h2>
+            <p class="text-[#5C4A3D] text-sm mb-6 leading-relaxed">
+              Step in from the cold! Relax with our freshly roasted espresso, rustic baked treats, and warm anime timber atmosphere.
+            </p>
+            <div class="flex flex-col gap-3 w-full max-w-[220px]">
+              <button @click="router.push('/order')" class="bg-[#8C6239] hover:bg-[#704E2D] text-white font-semibold py-2.5 px-5 rounded-xl text-sm transition-all shadow cursor-pointer text-center block w-full">🧋 Place an Order</button>
+              <button @click="router.push('/add-ons')" class="bg-[#D4A373] hover:bg-[#C28E5F] text-[#3D2817] font-semibold py-2.5 px-5 rounded-xl text-sm transition-all shadow cursor-pointer text-center block w-full">🌿 Browse Add-Ons</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ORDER NOW TAB -->
+      <div v-else-if="currentTab === 'order'" class="w-full self-start">
+        <div v-if="successMessage" class="bg-[#E2EBD0] border border-[#A4C270] text-[#324515] p-4 rounded-xl mb-6 text-sm font-semibold">{{ successMessage }}</div>
+        <div class="mb-6">
+          <h2 class="text-2xl font-serif font-bold text-[#3D2817]">Featured Menu</h2>
+          <p class="text-[#5C4A3D] text-sm">Freshly brewed milk tea, coffee, and delicious rustic snacks served daily.</p>
+        </div>
+        <MenuView @select-product="handleAddToCart" />
+      </div>
+
+      <!-- ADD-ONS TAB -->
+      <div v-else-if="currentTab === 'extras'" class="w-full self-start">
+        <div class="mb-6">
+          <h2 class="text-2xl font-serif font-bold text-[#3D2817]">Café Add-Ons & Extras</h2>
+          <p class="text-[#5C4A3D] text-sm">Customize your drinks with pearls, nata de coco, and extra espresso shots.</p>
+        </div>
+        <div v-if="addOns.length > 0" class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+          <div v-for="addon in addOns" :key="addon.id" class="bg-[#FAF3E0] border border-[#D4A373] rounded-2xl p-6 shadow-md flex flex-col justify-between">
+            <div>
+              <div v-if="addon.image" class="mb-3 h-28 w-full overflow-hidden rounded-xl bg-[#F4ECD8] border border-[#D4A373]/50 flex items-center justify-center">
+                <img :src="addon.image" alt="Add-on Image" class="h-full w-full object-contain" />
+              </div>
+              <h3 class="text-lg font-serif font-bold text-[#3D2817] mb-1">{{ addon.name }}</h3>
+              <p class="text-xs text-[#8C6239] mb-4 capitalize">Type: {{ addon.classification }}</p>
+            </div>
+            <div class="text-[#8C6239] font-extrabold text-lg">+₱{{ addon.price }}</div>
+          </div>
+        </div>
+        <div v-else class="text-center py-16 bg-[#FAF3E0] rounded-2xl border border-dashed border-[#D4A373]">
+          <p class="text-[#5C4A3D] text-sm">No add-ons available at the moment.</p>
+        </div>
+      </div>
+
+      <!-- CHECKOUT TAB -->
+      <div v-else-if="currentTab === 'checkout'" class="max-w-md mx-auto w-full self-start">
+        <!-- ACTIVE ORDER TRACKING BANNER -->
+        <div v-if="activeOrderId" class="mb-6">
+          <div v-if="activeOrderStatus === 'Pending'" class="bg-amber-50 border-2 border-amber-300 rounded-3xl p-6 text-center shadow-lg space-y-3">
+            <div class="flex justify-center">
+              <img src="/mascot7.gif" alt="Preparing" class="w-20 h-20 object-contain animate-bounce" />
+            </div>
+            <h3 class="text-lg font-serif font-bold text-[#3D2817]">Order #{{ activeOrderId }}</h3>
+            <div class="inline-block bg-amber-200 text-amber-900 font-extrabold text-sm px-4 py-1.5 rounded-full">
+              ⏳ Your order is being prepared!
+            </div>
+            <p class="text-xs text-amber-800">Hang tight! Our staff is crafting your order.</p>
+          </div>
+
+          <div v-else-if="activeOrderStatus === 'Completed'" class="bg-emerald-50 border-2 border-emerald-400 rounded-3xl p-6 text-center shadow-lg space-y-3">
+            <div class="flex justify-center">
+              <img src="/mascot8.gif" alt="Ready" class="w-20 h-20 object-contain" />
+            </div>
+            <h3 class="text-lg font-serif font-bold text-[#3D2817]">Order #{{ activeOrderId }}</h3>
+            <div class="inline-block bg-emerald-600 text-white font-extrabold text-sm px-4 py-1.5 rounded-full shadow">
+              🎉 Your order is ready!
+            </div>
+            <p class="text-xs text-emerald-800 font-semibold">Please head to the counter to pick up your order.</p>
+            <button @click="clearActiveOrder" class="mt-2 text-xs text-gray-500 underline font-bold cursor-pointer hover:text-gray-700">
+              Dismiss / Place New Order
+            </button>
+          </div>
+        </div>
+
+        <!-- Checkout Form -->
+        <div class="bg-[#FAF3E0] border border-[#D4A373] rounded-2xl p-8 shadow-xl">
+          <h2 class="text-2xl font-serif font-bold text-[#3D2817] mb-4 border-b border-[#D4A373]/40 pb-3">Complete Your Order</h2>
+          <div v-if="cart.length === 0" class="text-[#5C4A3D] text-sm italic py-8 text-center">Your cart is empty. Pick a drink from the <button @click="router.push('/order')" class="text-[#8C6239] underline font-semibold cursor-pointer">Order Now</button> tab!</div>
+          <div v-else class="space-y-6">
+            <div>
+              <label class="block text-xs font-bold text-[#5C4A3D] uppercase mb-2">Customer Name</label>
+              <input v-model="customerName" type="text" placeholder="Enter your name" class="w-full bg-white border border-[#D4A373] rounded-xl px-4 py-2.5 text-sm text-[#3D2817] focus:outline-none focus:border-[#8C6239]" />
+            </div>
+            <div class="space-y-3 max-h-60 overflow-y-auto pr-1">
+              <div v-for="item in cart" :key="item.cartId" class="flex justify-between items-center text-sm border-b border-[#D4A373]/30 pb-3">
+                <div>
+                  <div class="font-semibold text-[#3D2817]">{{ item.product.name }} (x{{ item.quantity }})</div>
+                  <div v-if="item.selectedAddOns.length > 0" class="text-xs text-[#8C6239]">+ {{ item.selectedAddOns.map(a => a.name).join(', ') }}</div>
+                </div>
+                <div class="flex items-center space-x-4">
+                  <span class="font-bold text-[#8C6239]">₱{{ itemPrice(item).toFixed(2) }}</span>
+                  <button @click="removeFromCart(item.cartId)" class="text-red-600 hover:text-red-800 font-bold text-xs cursor-pointer">✕</button>
+                </div>
+              </div>
+            </div>
+            <div class="pt-4 border-t border-[#D4A373]/40 flex justify-between text-xl font-extrabold text-[#3D2817]">
+              <span>Total Amount:</span><span>₱{{ cartTotal() }}</span>
+            </div>
+            <button @click="checkout" :disabled="isSubmitting" class="w-full bg-[#527941] hover:bg-[#3E5C31] disabled:bg-gray-400 text-white font-medium py-3 rounded-xl transition-colors shadow-lg cursor-pointer">
+              {{ isSubmitting ? 'Placing Order...' : 'Confirm & Place Order 🎉' }}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ADMIN PANEL TAB -->
+      <div v-else-if="currentTab === 'admin'" class="w-full self-start">
+        <div v-if="!authToken" class="max-w-md mx-auto bg-[#FAF3E0] rounded-3xl p-8 shadow-2xl border-2 border-[#D4A373] text-center space-y-4">
+          <img src="/mascot4.gif" alt="Staff Mascot" class="w-24 h-24 mx-auto object-contain" />
+          <h3 class="text-xl font-serif font-bold text-[#3D2817]">Staff Portal Access Required</h3>
+          <p class="text-xs text-[#5C4A3D]">Please log in to manage orders, inventory, staff approvals, and password reset requests.</p>
+          <button @click="isAuthModalOpen = true" class="w-full bg-[#8C6239] hover:bg-[#704E2D] text-white py-2.5 rounded-xl font-medium text-sm transition-colors shadow cursor-pointer">Open Staff Portal</button>
+        </div>
+
+        <div v-else class="w-full">
+          <AdminPanel @logout="handleStaffLogout" />
+        </div>
+      </div>
+
     </main>
 
-    <!-- Staff Auth Modal -->
+    <!-- STAFF AUTH MODAL -->
     <StaffAuthModal
         :is-open="isAuthModalOpen"
         @close="isAuthModalOpen = false"
