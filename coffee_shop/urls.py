@@ -13,5 +13,4 @@ urlpatterns = [
     path('api/request-password-reset/', views.submit_password_reset, name='request_password_reset_alt'),
 ]
 
-if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -31,7 +31,6 @@ def submit_password_reset(request):
     if not user:
         return Response({'error': 'User not found with that username.'}, status=status.HTTP_404_NOT_FOUND)
 
-    # Store plain text temporarily so approval view/update hashes it correctly once via set_password()
     PasswordResetRequest.objects.create(
         user=user,
         new_password=new_password,
@@ -74,7 +73,6 @@ class PasswordResetRequestViewSet(viewsets.ModelViewSet):
     serializer_class = PasswordResetRequestSerializer
 
     def perform_update(self, serializer):
-        # Automatically hash and apply the new password to the user when approved
         instance = serializer.save()
         if instance.is_approved:
             user = instance.user

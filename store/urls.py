@@ -11,7 +11,6 @@ router.register(r'order-items', views.OrderItemViewSet)
 router.register(r'password-resets', views.PasswordResetRequestViewSet)
 
 urlpatterns = [
-    # Custom endpoint for submitting password reset requests
     path('password-resets/submit/', views.submit_password_reset, name='submit_password_reset'),
 
     # Standard router URLs

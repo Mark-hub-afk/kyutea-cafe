@@ -43,7 +43,17 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'store.apps.StoreConfig',
     'corsheaders',
+    'cloudinary_storage',
+    'cloudinary',
 ]
+
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': os.environ.get('CLOUDINARY_CLOUD_NAME', 'wuhjuu7b'),
+    'API_KEY': os.environ.get('CLOUDINARY_API_KEY', '753517876784212'),
+    'API_SECRET': os.environ.get('CLOUDINARY_API_SECRET', 'FF67Es3dz8XoQQnBCIXm_ItZaU0'),
+}
+
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 
 AUTH_USER_MODEL = "store.CustomUser"
 
@@ -147,6 +157,6 @@ CSRF_TRUSTED_ORIGINS = [
 ]
 
 MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 CORS_ALLOW_ALL_ORIGINS = True
