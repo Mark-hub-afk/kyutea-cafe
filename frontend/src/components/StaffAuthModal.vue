@@ -112,6 +112,11 @@ const handleLogin = async () => {
     const token = res.data.token
 
     localStorage.setItem('kyuTeaToken', token)
+
+    // Save user profile data so AdminPanel.vue can detect user privileges
+    const userData = res.data.user || res.data
+    localStorage.setItem('user', JSON.stringify(userData))
+
     loginData.value = { username: '', password: '' }
 
     emit('login-success', token)
