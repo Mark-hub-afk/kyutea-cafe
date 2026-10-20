@@ -3,6 +3,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
+from rest_framework.authtoken.views import ObtainAuthToken
 from django.contrib.auth.hashers import make_password
 from .models import CustomUser, Product, Add_on, Order, OrderItem, PasswordResetRequest
 from rest_framework.parsers import MultiPartParser, FormParser
@@ -10,6 +11,34 @@ from .serializers import (
     CustomUserSerializer, ProductSerializer, AddOnSerializer,
     OrderSerializer, OrderItemSerializer, PasswordResetRequestSerializer
 )
+
+class CustomObtainAuthToken(ObtainAuthToken):
+    def post(self, request, *args, **kwargs):
+        serializer = self.serializer_class(data=request.data, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        user = serializer.validated_data['user']
+
+        # 🛑 Block login if the account has been revoked or is not approved
+        if not user.is_approved:
+            return Response(
+                {'error': 'Your account approval has been revoked or is pending.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        token, created = Token.objects.get_or_create(user=user)
+        return Response({
+            'token': token.key,
+            'user': {
+                'id': user.id,
+                'username': user.username,
+                'email': user.email,
+                'is_approved': user.is_approved,
+                'is_admin_privileged': getattr(user, 'is_admin_privileged', False),
+                'is_superuser': user.is_superuser,
+            }
+        })
+
+obtain_auth_token = CustomObtainAuthToken.as_view()
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
