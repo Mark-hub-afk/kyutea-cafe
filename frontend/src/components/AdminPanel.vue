@@ -5,8 +5,7 @@
       <div>
         <h1 class="text-2xl font-bold text-[#4A2E19]">Staff Admin Dashboard</h1>
         <p class="text-sm text-gray-600">
-          Logged in as: <span class="font-bold text-[#8B5A2B]">{{ loggedInUser.username || 'User' }}</span>
-          ({{ currentUserPrivileged ? 'Admin Account' : 'Staff Account' }})
+          Logged in as: <span class="font-bold text-[#8B5A2B]">{{ loggedInUser.username || 'Staff User' }}</span>
         </p>
       </div>
       <button @click="$emit('logout')" class="bg-red-600 text-white px-4 py-2 rounded-xl text-sm font-bold hover:bg-red-700 transition cursor-pointer">
@@ -14,11 +13,9 @@
       </button>
     </div>
 
-    <!-- Navigation Tabs -->
+    <!-- Navigation Tabs (All tabs visible to everyone) -->
     <div class="flex space-x-6 border-b border-amber-200 pb-3 mb-6 text-sm font-bold overflow-x-auto">
-      <!-- STAFF TABS (Visible ONLY to regular Staff) -->
       <button
-          v-if="!currentUserPrivileged"
           @click="currentTab = 'orders'; fetchOrders()"
           :class="currentTab === 'orders' ? 'text-[#8B5A2B] border-b-2 border-[#8B5A2B]' : 'text-gray-400 hover:text-gray-600'"
           class="pb-2 transition cursor-pointer whitespace-nowrap"
@@ -26,7 +23,6 @@
         📦 Orders
       </button>
       <button
-          v-if="!currentUserPrivileged"
           @click="currentTab = 'inventory'; fetchProducts()"
           :class="currentTab === 'inventory' ? 'text-[#8B5A2B] border-b-2 border-[#8B5A2B]' : 'text-gray-400 hover:text-gray-600'"
           class="pb-2 transition cursor-pointer whitespace-nowrap"
@@ -34,17 +30,13 @@
         ☕ Menu Inventory
       </button>
       <button
-          v-if="!currentUserPrivileged"
           @click="currentTab = 'addons'; fetchAddOns()"
           :class="currentTab === 'addons' ? 'text-[#8B5A2B] border-b-2 border-[#8B5A2B]' : 'text-gray-400 hover:text-gray-600'"
           class="pb-2 transition cursor-pointer whitespace-nowrap"
       >
         extras Add-Ons
       </button>
-
-      <!-- ADMIN TABS (Visible ONLY to Admin accounts) -->
       <button
-          v-if="currentUserPrivileged"
           @click="currentTab = 'approvals'; fetchStaffUsers()"
           :class="currentTab === 'approvals' ? 'text-[#8B5A2B] border-b-2 border-[#8B5A2B]' : 'text-gray-400 hover:text-gray-600'"
           class="pb-2 transition cursor-pointer whitespace-nowrap"
@@ -52,7 +44,6 @@
         👥 Staff Approvals
       </button>
       <button
-          v-if="currentUserPrivileged"
           @click="currentTab = 'resets'; fetchPasswordResets()"
           :class="currentTab === 'resets' ? 'text-[#8B5A2B] border-b-2 border-[#8B5A2B]' : 'text-gray-400 hover:text-gray-600'"
           class="pb-2 transition cursor-pointer whitespace-nowrap"
@@ -61,8 +52,8 @@
       </button>
     </div>
 
-    <!-- TAB 1: ORDERS (STAFF ONLY) -->
-    <div v-if="!currentUserPrivileged && currentTab === 'orders'" class="bg-[#FDFBF7] p-6 rounded-2xl shadow-sm border border-amber-100">
+    <!-- TAB 1: ORDERS -->
+    <div v-if="currentTab === 'orders'" class="bg-[#FDFBF7] p-6 rounded-2xl shadow-sm border border-amber-100">
       <div class="flex justify-between items-center mb-4">
         <h2 class="text-lg font-bold text-[#4A2E19]">Recent Orders</h2>
         <button @click="fetchOrders" class="bg-[#8B5A2B] text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-[#6F441F] cursor-pointer">
@@ -108,8 +99,8 @@
       </div>
     </div>
 
-    <!-- TAB 2: MENU INVENTORY (STAFF ONLY) -->
-    <div v-else-if="!currentUserPrivileged && currentTab === 'inventory'" class="bg-[#FDFBF7] p-6 rounded-2xl shadow-sm border border-amber-100">
+    <!-- TAB 2: MENU INVENTORY -->
+    <div v-else-if="currentTab === 'inventory'" class="bg-[#FDFBF7] p-6 rounded-2xl shadow-sm border border-amber-100">
       <div class="flex justify-between items-center mb-4">
         <h2 class="text-lg font-bold text-[#4A2E19]">Menu Catalog Management</h2>
         <button @click="openProductModal(null)" class="bg-[#8B5A2B] text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-[#6F441F] cursor-pointer">
@@ -134,8 +125,8 @@
       </div>
     </div>
 
-    <!-- TAB 3: ADD-ONS MANAGEMENT (STAFF ONLY) -->
-    <div v-else-if="!currentUserPrivileged && currentTab === 'addons'" class="bg-[#FDFBF7] p-6 rounded-2xl shadow-sm border border-amber-100">
+    <!-- TAB 3: ADD-ONS MANAGEMENT -->
+    <div v-else-if="currentTab === 'addons'" class="bg-[#FDFBF7] p-6 rounded-2xl shadow-sm border border-amber-100">
       <div class="flex justify-between items-center mb-4">
         <h2 class="text-lg font-bold text-[#4A2E19]">Add-Ons Management</h2>
         <button @click="openAddOnModal(null)" class="bg-[#8B5A2B] text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-[#6F441F] cursor-pointer">
@@ -160,8 +151,8 @@
       </div>
     </div>
 
-    <!-- TAB 4: STAFF APPROVALS (ADMIN ONLY) -->
-    <div v-else-if="currentUserPrivileged && currentTab === 'approvals'" class="bg-[#FDFBF7] p-6 rounded-2xl shadow-sm border border-amber-100">
+    <!-- TAB 4: STAFF APPROVALS -->
+    <div v-else-if="currentTab === 'approvals'" class="bg-[#FDFBF7] p-6 rounded-2xl shadow-sm border border-amber-100">
       <h2 class="text-lg font-bold text-[#4A2E19] mb-4">Staff Accounts Approval</h2>
 
       <div class="overflow-x-auto">
@@ -180,44 +171,28 @@
             <td class="py-3 px-4 text-gray-600">{{ user.email || '—' }}</td>
             <td class="py-3 px-4">
                 <span
-                    :class="user.is_approved
-                    ? (user.is_admin_privileged ? 'bg-amber-100 text-amber-800' : 'bg-green-100 text-green-800')
-                    : 'bg-yellow-100 text-yellow-800'"
+                    :class="user.is_approved ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'"
                     class="px-2.5 py-1 rounded-full text-xs font-bold"
                 >
-                  {{ user.is_approved ? (user.is_admin_privileged ? '★ Admin' : 'Approved Staff') : 'Pending Approval' }}
+                  {{ user.is_approved ? 'Approved Staff' : 'Pending Approval' }}
                 </span>
             </td>
             <td class="py-3 px-4 text-center">
               <div v-if="!user.is_approved" class="flex justify-center gap-2">
                 <button
-                    @click="updateUserPermissions(user, true, false)"
+                    @click="updateUserApproval(user, true)"
                     class="px-3 py-1 bg-[#2D6A4F] text-white font-bold rounded-lg text-xs hover:bg-[#1B4332] transition cursor-pointer"
                 >
                   Approve Staff
-                </button>
-                <button
-                    @click="updateUserPermissions(user, true, true)"
-                    class="px-3 py-1 bg-[#8B5A2B] text-white font-bold rounded-lg text-xs hover:bg-[#6F441F] transition cursor-pointer"
-                >
-                  Make Admin
                 </button>
               </div>
 
               <div v-else class="flex justify-center items-center gap-2">
                 <button
-                    @click="toggleAdminPrivilege(user)"
-                    :class="user.is_admin_privileged ? 'bg-amber-100 text-amber-800 border border-amber-300' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
-                    class="px-2.5 py-1 rounded-lg text-xs font-bold cursor-pointer transition"
+                    @click="updateUserApproval(user, false)"
+                    class="px-3.5 py-1.5 bg-[#A44A1B] text-white font-bold rounded-lg text-xs hover:bg-[#803510] transition cursor-pointer"
                 >
-                  {{ user.is_admin_privileged ? '★ Admin' : '+ Make Admin' }}
-                </button>
-
-                <button
-                    @click="updateUserPermissions(user, false, false)"
-                    class="px-3 py-1 bg-[#A44A1B] text-white font-bold rounded-lg text-xs hover:bg-[#803510] transition cursor-pointer"
-                >
-                  Revoke
+                  Revoke Access
                 </button>
               </div>
             </td>
@@ -227,8 +202,8 @@
       </div>
     </div>
 
-    <!-- TAB 5: PASSWORD RESETS (ADMIN ONLY) -->
-    <div v-else-if="currentUserPrivileged && currentTab === 'resets'" class="bg-[#FDFBF7] p-6 rounded-2xl shadow-sm border border-amber-100">
+    <!-- TAB 5: PASSWORD RESETS -->
+    <div v-else-if="currentTab === 'resets'" class="bg-[#FDFBF7] p-6 rounded-2xl shadow-sm border border-amber-100">
       <h2 class="text-lg font-bold text-[#4A2E19] mb-4">Pending Password Reset Requests</h2>
 
       <div class="overflow-x-auto">
@@ -358,8 +333,7 @@
 import { ref, onMounted } from 'vue'
 import API from '@/services/api'
 
-const loggedInUser = ref({ username: '', is_admin_privileged: false, is_superuser: false })
-const currentUserPrivileged = ref(false)
+const loggedInUser = ref({ username: '' })
 const currentTab = ref('orders')
 
 const orders = ref([])
@@ -384,48 +358,12 @@ const addonFormClassification = ref('Drink')
 const addonFormPrice = ref('')
 const addonFormImage = ref(null)
 
-const checkIsAdmin = (user) => {
-  return Boolean(
-      user.is_admin_privileged === true ||
-      user.is_superuser === true ||
-      user.role === 'admin' ||
-      user.username === 'admin'
-  )
-}
-
-// Fetch real user data from backend to guarantee proper permissions
-const initializeUserSession = async () => {
+const initializeUserSession = () => {
   try {
-    // Try querying users/me/ or fallback to matching local storage username against the user list
-    const res = await API.get('users/')
     const stored = JSON.parse(localStorage.getItem('user') || '{}')
-    const currentUsername = stored.username
-
-    if (currentUsername) {
-      const found = res.data.find(u => u.username === currentUsername)
-      if (found) {
-        loggedInUser.value = found
-      } else {
-        loggedInUser.value = stored
-      }
-    } else {
-      loggedInUser.value = stored
-    }
-  } catch (err) {
-    console.error('Failed to verify session, falling back to storage:', err)
-    loggedInUser.value = JSON.parse(localStorage.getItem('user') || '{}')
-  }
-
-  currentUserPrivileged.value = checkIsAdmin(loggedInUser.value)
-  currentTab.value = currentUserPrivileged.value ? 'approvals' : 'orders'
-
-  if (currentUserPrivileged.value) {
-    fetchStaffUsers()
-    fetchPasswordResets()
-  } else {
-    fetchOrders()
-    fetchProducts()
-    fetchAddOns()
+    loggedInUser.value = stored
+  } catch {
+    loggedInUser.value = {}
   }
 }
 
@@ -483,33 +421,16 @@ const updateOrderStatus = async (orderId, newStatus) => {
   }
 }
 
-const updateUserPermissions = async (user, isApproved, isAdmin) => {
+const updateUserApproval = async (user, isApproved) => {
   try {
     await API.patch(`users/${user.id}/`, {
       is_approved: isApproved,
-      is_admin_privileged: isAdmin,
-      is_staff: isApproved,
-      is_superuser: isAdmin
+      is_staff: isApproved
     })
     user.is_approved = isApproved
-    user.is_admin_privileged = isAdmin
     fetchStaffUsers()
   } catch (err) {
-    alert('Failed to update staff permissions.')
-  }
-}
-
-const toggleAdminPrivilege = async (user) => {
-  try {
-    const newAdminStatus = !user.is_admin_privileged
-    await API.patch(`users/${user.id}/`, {
-      is_admin_privileged: newAdminStatus,
-      is_superuser: newAdminStatus
-    })
-    user.is_admin_privileged = newAdminStatus
-    fetchStaffUsers()
-  } catch (err) {
-    alert('Failed to toggle admin status.')
+    alert('Failed to update staff status.')
   }
 }
 
@@ -633,5 +554,6 @@ const deleteAddOn = async (addonId) => {
 
 onMounted(() => {
   initializeUserSession()
+  fetchOrders()
 })
 </script>
